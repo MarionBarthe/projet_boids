@@ -3,6 +3,7 @@
 void Boid::update(p6::Context* ctx, std::vector<Boid> boids)
 {
     align(boids);
+    separate(boids);
     position += velocity;
 
     // gère les bords
@@ -37,6 +38,33 @@ void Boid::align(const std::vector<Boid> boids)
             count++;
         }
     }
-    sumVel /= count;
-    velocity = sumVel;
+    if (count > 0)
+    {
+        sumVel /= count;
+        velocity += sumVel;
+    }
+}
+
+void Boid::separate(const std::vector<Boid> boids)
+{
+    glm::vec2 sumVel(0., 0.);
+
+    float separation = 0.2;
+    int   count      = 0;
+    for (auto& b : boids)
+    {
+        float distance = glm::distance(b.position, this->position);
+        if (distance < separation)
+        {
+            glm::vec2 diff = this->position - b.position;
+            diff /= distance;
+            sumVel += b.velocity;
+            count++;
+        }
+    }
+    if (count > 0)
+    {
+        sumVel /= count;
+        velocity += sumVel;
+    }
 }
