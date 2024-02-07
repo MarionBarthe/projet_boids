@@ -7,11 +7,7 @@
 
 int main()
 {
-    std::vector<Boid> boids;
-    for (int i = 0; i < 10; i++)
-    {
-        boids.emplace_back(Boid());
-    }
+    std::vector<Boid> boids(10);
 
     // Run the tests
     if (doctest::Context{}.run() != 0)
@@ -26,8 +22,8 @@ int main()
         ctx.background(p6::NamedColor::BlueCrayola);
         for (auto& b : boids)
         {
-            b.draw(&ctx);
-            b.update(&ctx);
+            b.draw(ctx);
+            b.update(&ctx, boids);
         }
     };
 
