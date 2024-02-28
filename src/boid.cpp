@@ -2,6 +2,9 @@
 
 void Boid::update(p6::Context* ctx, std::vector<Boid> boids)
 {
+    velocity = {0.00001, 0.00001};
+
+    cohesion(boids);
     align(boids);
     separate(boids);
     position += velocity;
@@ -67,4 +70,22 @@ void Boid::separate(const std::vector<Boid> boids)
         sumVel /= count;
         velocity += sumVel;
     }
+}
+
+void Boid::cohesion(const std::vector<Boid> boids)
+{
+    float     isNeighbor      = 0.005;
+    int       countOfNeighbor = 0;
+    glm::vec2 sumCoh(0, 0);
+    for (const auto& b : boids)
+    {
+        float distance = glm::distance(position, b.position);
+        if ((distance > 0) && (distance < isNeighbor))
+        {
+            sumCoh += b.position;
+            countOfNeighbor++;
+        }
+    }
+    sumCoh = (countOfNeighbor > 0) ? (sumCoh / static_cast<float>(countOfNeighbor)) : sumCoh;
+    velocity += sumCoh;
 }

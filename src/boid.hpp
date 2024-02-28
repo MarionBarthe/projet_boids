@@ -13,5 +13,6 @@ public:
     void update(p6::Context* ctx, std::vector<Boid> boids);
     void draw(p6::Context& ctx);
     void align(const std::vector<Boid> boids);
+    void cohesion(const std::vector<Boid> boids);
     void separate(const std::vector<Boid> boids);
 };
