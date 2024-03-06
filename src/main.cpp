@@ -1,9 +1,8 @@
 #include <cstdlib>
 #define DOCTEST_CONFIG_IMPLEMENT
+#include "boid.hpp"
 #include "doctest/doctest.h"
 #include "p6/p6.h"
-#include "boid.hpp"
-
 
 int main()
 {
@@ -14,12 +13,16 @@ int main()
         return EXIT_FAILURE;
 
     // Actual application code
-    auto ctx = p6::Context{{.title = "Simple-p6-Setup"}};
+    auto ctx = p6::Context{{.title = "boids boids boids !!!"}};
     ctx.maximize_window();
 
     // Declare your infinite update loop.
     ctx.update = [&]() {
         ctx.background(p6::NamedColor::BlueCrayola);
+            ctx.use_fill = true;
+
+        ctx.fill = p6::NamedColor::BabyBlue;
+        ctx.square(p6::Center{glm::vec2(0., 0.)}, p6::Radius{0.8f});
         for (auto& b : boids)
         {
             b.draw(ctx);
