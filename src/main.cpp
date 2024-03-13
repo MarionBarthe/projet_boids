@@ -18,9 +18,11 @@ int main()
 
     bool show_demo_window = false;
 
+    Coeffs coeffs;
+
     // Declare your infinite update loop.
     ctx.update = [&]() {
-        auto radius_boid = 0.8f;
+        // auto radius_boid = 0.8f;
 
         // Show a simple window
         if (show_demo_window)
@@ -28,17 +30,14 @@ int main()
 
         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
         {
-            static float coeff_align    = 0.0f;
-            static float coeff_cohesion = 0.0f;
-            static float coeff_separate = 0.0f;
-
             ImGui::Begin("Boids command panel");                    // Create a window
             ImGui::Text("Play with the parameters of the flock !"); // Display some text (you can use a format strings too)
             ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
             ImGui::SeparatorText("Rules");
-            ImGui::SliderFloat("Align", &coeff_align, 0.0f, .1f);
-            ImGui::SliderFloat("Cohesion", &coeff_cohesion, 0.0f, .1f);
-            ImGui::SliderFloat("Separate", &coeff_separate, 0.0f, .1f);
+            ImGui::SliderFloat("Align", &coeffs.coeff_align, 0.0f, .1f);
+            ImGui::SliderFloat("Cohesion", &coeffs.coeff_cohesion, 0.0f, .1f);
+            ImGui::SliderFloat("Separate", &coeffs.coeff_separate, 0.0f, .1f);
+            ImGui::SliderFloat("Radius of awareness", &coeffs.radius_awareness, 0.0f, 1.f);
 
             ImGui::End();
         }
@@ -50,8 +49,8 @@ int main()
         ctx.square(p6::Center{glm::vec2(0., 0.)}, p6::Radius{0.8f});
         for (auto& b : boids)
         {
-            b.draw(ctx);
-            b.update(&ctx, boids);
+            b.draw(ctx, coeffs.radius_awareness);
+            b.update(&ctx, boids, coeffs);
         }
     };
 
