@@ -2,26 +2,34 @@
 #include "p6/p6.h"
 
 struct Coeffs {
+    float square_length    = 0.8;
     float radius_awareness = 0.2;
-    float coeff_separate   = 0.02;
-    float coeff_align      = 0.05;
-    float coeff_cohesion   = 0.05;
+    float separate         = 0.02;
+    float align            = 0.05;
+    float cohesion         = 0.05;
+
+    void draw_Gui()
+    {
+        ImGui::SliderFloat("Align", &align, 0.0f, .1f);
+        ImGui::SliderFloat("Cohesion", &cohesion, 0.0f, .1f);
+        ImGui::SliderFloat("Separate", &separate, 0.0f, .1f);
+        ImGui::SliderFloat("Radius of awareness", &radius_awareness, 0.0f, 1.f);
+        ImGui::SliderFloat("Length of the borders", &square_length, 0.0f, 1.f);
+    }
 };
 class Boid {
 private:
-    glm::vec2 position;
-    glm::vec2 velocity;
-    glm::vec2 acceleration;
+    glm::vec2 m_position;
+    glm::vec2 m_velocity;
 
-public:
-    Boid()
-        : position(p6::random::point())
-        , velocity(p6::random::point(glm::vec2(-0.001, -0.001), glm::vec2(0.001, 0.001)))
-        , acceleration(glm::vec2(0., 0.)){};
-    void      update(p6::Context* ctx, const std::vector<Boid>& boids, Coeffs coeffs);
-    void      draw(p6::Context& ctx, float radius_awareness);
     glm::vec2 align(const std::vector<Boid>& boids, float radius_awareness);
     glm::vec2 cohesion(const std::vector<Boid>& boids, float radius_awareness);
     glm::vec2 separate(const std::vector<Boid>& boids, float radius_awareness);
-    void      applyForce(const glm::vec2 force);
+
+public:
+    Boid()
+        : m_position(p6::random::point())
+        , m_velocity(p6::random::point(glm::vec2(-0.01, -0.01), glm::vec2(0.01, 0.01))){};
+    void update(p6::Context* ctx, const std::vector<Boid>& boids, Coeffs coeffs);
+    void draw(p6::Context& ctx, float radius_awareness);
 };
