@@ -1,4 +1,6 @@
 #include <cmath>
+#include <iostream>
+#include <vector>
 
 // Calculate the binomial coefficient, (n k), representing the number of ways to choose k items from a set of n distinct items
 unsigned long long binomial_coefficient(int n, int k)
@@ -37,8 +39,19 @@ bool bernoulli_distribution(double p)
     return random_num < p; // Return 0 or 1 depending on the success
 }
 
-// Simulate binomial distribution by generating a number of success with n, number of trials, and p, probability of success
+// Simulate binomial distribution by generating a number of success with n, number of trials, and p, probability of success, using multiples Bernoulli disribution
 int binomial_distribution(int n, double p)
+{
+    int successes = 0;
+    for (int i = 0; i < n; i++)
+    {
+        bernoulli_distribution(p) && successes++;
+    }
+    return successes;
+}
+
+// Simulate binomial distribution by generating a number of success with n, number of trials, and p, probability of success, using the Monte Carlo method
+int binomial_distribution_monte_carlo(int n, double p)
 {
     int    success_probability = 0;
     double random_threshold    = (double)rand() / RAND_MAX; // Random number between 0 and 1
@@ -79,3 +92,40 @@ double laplace_distribution(double mu, double b)
     // If u is greater than or equal to 0, use the right side of the Laplace distribution
     return mu - b * log(1 - 2 * u);
 }
+
+// TODO(Guilhem): Study to understand better the function
+// Simulate normal distribution with parameters average and quarterType
+double normalDistribution(double average, double quarterType)
+{
+    // Ensure u isn't zero to prevent division by zero
+    double u = 0.0;
+    while (u == 0.0)
+    {
+        u = static_cast<double>(rand()) / RAND_MAX; // Random number between 0 and 1
+    }
+
+    // Ensure v isn't zero to prevent division by zero
+    double v = 0.0;
+    while (v == 0.0)
+    {
+        v = static_cast<double>(rand()) / RAND_MAX; // Random number between 0 and 1
+    }
+
+    // Box-Muller transform to generate normally distributed variable
+    double result = sqrt(-2.0 * log(u)) * cos(2.0 * M_PI * v);
+
+    // Scale and shift the normal variable to match the desired mean and standard deviation
+    return result * sqrt(quarterType) + average;
+}
+
+// Simulate uniform distribution with parameters lower_bound, the smallest result possible and upper_bound, the largest result possible
+double uniformDistribution(double lower_bound, double upper_bound)
+{
+    // Generate a random number between 0 and RAND_MAX
+    double random_num = static_cast<double>(rand()) / RAND_MAX; // Random number between 0 and 1
+
+    // Scale and shift the random number to fit within the specified range
+    return lower_bound + (upper_bound - lower_bound) * random_num;
+}
+
+// TODO(guilhem): beta_distribution + finish markov_chain + some_simple_distribution
