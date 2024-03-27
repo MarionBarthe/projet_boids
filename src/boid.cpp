@@ -3,7 +3,7 @@
 #include "cmath"
 #include "glm/ext/quaternion_geometric.hpp"
 
-static glm::vec2 limit(glm::vec2 force)
+static glm::vec3 limit(glm::vec3 force)
 {
     float norm = glm::length(force);
 
@@ -22,7 +22,7 @@ static glm::vec2 limit(glm::vec2 force)
 
 void Boid::update(p6::Context* ctx, const std::vector<Boid>& boids, Coeffs coeffs)
 {
-    glm::vec2 acceleration{0.f};
+    glm::vec3 acceleration{0.f};
 
     acceleration += cohesion(boids, coeffs.radius_awareness) * coeffs.cohesion;
     acceleration += align(boids, coeffs.radius_awareness) * coeffs.align;
@@ -34,14 +34,14 @@ void Boid::update(p6::Context* ctx, const std::vector<Boid>& boids, Coeffs coeff
 
     // gère les bords pour que les boids ne sortent pas de la fenetre
     if (m_position.x <= -coeffs.square_length)
-        m_position.x = coeffs.square_length - 0.005;
+        m_position.x = coeffs.square_length - 0.005f;
     else if (m_position.x >= coeffs.square_length)
-        m_position.x = - (coeffs.square_length - 0.005);
+        m_position.x = - (coeffs.square_length - 0.005f);
 
     if (m_position.y <= -coeffs.square_length)
-        m_position.y = coeffs.square_length - 0.005;
+        m_position.y = coeffs.square_length - 0.005f;
     else if (m_position.y >= coeffs.square_length)
-        m_position.y = -(coeffs.square_length - 0.005);
+        m_position.y = -(coeffs.square_length - 0.005f);
 };
 
 void Boid::draw(p6::Context& ctx, float radius_awareness)
@@ -55,9 +55,9 @@ void Boid::draw(p6::Context& ctx, float radius_awareness)
     ctx.circle(p6::Center{m_position}, p6::Radius{radius_awareness});
 }
 
-glm::vec2 Boid::align(const std::vector<Boid>& boids, float radius_awareness)
+glm::vec3 Boid::align(const std::vector<Boid>& boids, float radius_awareness)
 {
-    glm::vec2 target(0., 0.);
+    glm::vec3 target(0.f);
     int       count = 0;
 
     for (const auto& b : boids)
@@ -76,9 +76,9 @@ glm::vec2 Boid::align(const std::vector<Boid>& boids, float radius_awareness)
     return target;
 }
 
-glm::vec2 Boid::separate(const std::vector<Boid>& boids, float radius_awareness)
+glm::vec3 Boid::separate(const std::vector<Boid>& boids, float radius_awareness)
 {
-    glm::vec2 target(0., 0.);
+    glm::vec3 target(0.f);
 
     int count = 0;
     for (const Boid& other : boids)
@@ -86,7 +86,7 @@ glm::vec2 Boid::separate(const std::vector<Boid>& boids, float radius_awareness)
         float distance = glm::distance(m_position, other.m_position);
         if (&other != this && distance < radius_awareness)
         {
-            glm::vec2 diff = m_position - other.m_position;
+            glm::vec3 diff = m_position - other.m_position;
             diff /= distance * distance;
             target += diff;
             count++;
@@ -96,16 +96,16 @@ glm::vec2 Boid::separate(const std::vector<Boid>& boids, float radius_awareness)
         return target;
 
     target /= count;
-    glm::vec2 force = target - m_velocity;
+    glm::vec3 force = target - m_velocity;
     force           = limit(force);
     return force;
 }
 
-glm::vec2 Boid::cohesion(const std::vector<Boid>& boids, float radius_awareness)
+glm::vec3 Boid::cohesion(const std::vector<Boid>& boids, float radius_awareness)
 {
     int count = 0;
 
-    glm::vec2 target(0, 0);
+    glm::vec3 target(0.f);
     for (const auto& b : boids)
     {
         if ((glm::distance(m_position, b.m_position) < radius_awareness))
