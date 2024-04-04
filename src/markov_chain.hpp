@@ -24,6 +24,12 @@ public:
     const std::vector<double>& get_current_state() const;
 
     const std::vector<int>& get_state_counts() const;
+
+    void display_current_state();
+
+    void display_state_counts();
+
+    std::vector<double> calculate_stationary_distribution();
 };
 
 #endif // MARKOV_CHAIN_HPP

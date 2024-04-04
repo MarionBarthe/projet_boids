@@ -1,6 +1,18 @@
 #include "markov_chain.hpp"
+#include <cmath>
 #include <cstdlib>
 #include <ctime>
+
+// Function to print the content of a container
+template<typename T>
+void print_container(const T& container)
+{
+    for (const auto& element : container)
+    {
+        std::cout << element << " ";
+    }
+    std::cout << std::endl;
+}
 
 MarkovChain::MarkovChain(const std::vector<std::vector<double>>& transition_matrix, const std::vector<double>& initial_state)
     : transition_matrix(transition_matrix), current_state(initial_state), state_counts(initial_state.size() + 1, 0.0)
@@ -135,12 +147,7 @@ void MarkovChain::collapse_values()
     current_state[active_state_index] = 1.0;
 
     // Log the current state
-    std::cout << "Current state:";
-    for (double state_prob : current_state)
-    {
-        std::cout << " " << state_prob;
-    }
-    std::cout << '\n';
+    display_current_state();
     std::cout << "_____________________" << '\n';
     std::cout << '\n';
 }
@@ -161,7 +168,90 @@ const std::vector<int>& MarkovChain::get_state_counts() const
     return state_counts;
 }
 
-/* int main()
+void MarkovChain::display_current_state()
+{
+    std::cout << "State |";
+    for (size_t i = 0; i < current_state.size(); ++i)
+    {
+        std::cout << " " << i + 1 << " : ";
+        std::cout << current_state[i] << " |";
+    }
+    std::cout << "\n";
+}
+
+void MarkovChain::display_state_counts()
+{
+    std::cout << "State Counts |";
+    for (size_t i = 0; i < state_counts.size() - 1; ++i)
+    {
+        std::cout << " " << i + 1 << " : ";
+        std::cout << state_counts[i] << " |";
+    }
+    std::cout << " Total : ";
+    std::cout << state_counts[state_counts.size() - 1] << "\n";
+}
+
+// Function to calculate the stable state distribution
+std::vector<double> MarkovChain::calculate_stationary_distribution()
+{
+    // Get the size of the transition matrix
+    size_t size = transition_matrix.size();
+
+    // Initialize a vector to hold the stationary distribution
+    std::vector<double> stationary_distribution(size, 0.0);
+
+    // Initialize a vector to hold the initial guess for the stationary distribution
+    std::vector<double> previous_distribution(size, 1.0 / size);
+
+    // Iterate until convergence
+    double epsilon = 1e-6;
+    while (true)
+    {
+        // Calculate the next iteration of the distribution
+        std::vector<double> next_distribution(size, 0.0);
+        for (size_t i = 0; i < size; ++i)
+        {
+            for (size_t j = 0; j < size; ++j)
+            {
+                next_distribution[j] += previous_distribution[i] * transition_matrix[i][j];
+            }
+        }
+
+        // Normalize the distribution
+        double sum = 0.0;
+        for (double prob : next_distribution)
+        {
+            sum += prob;
+        }
+        for (double& prob : next_distribution)
+        {
+            prob /= sum;
+        }
+
+        // Check for convergence
+        bool converged = true;
+        for (size_t i = 0; i < size; ++i)
+        {
+            if (std::abs(next_distribution[i] - previous_distribution[i]) > epsilon)
+            {
+                converged = false;
+                break;
+            }
+        }
+
+        // If converged, return the stationary distribution
+        if (converged)
+        {
+            return next_distribution;
+        }
+
+        // Update previous distribution for the next iteration
+        previous_distribution = next_distribution;
+    }
+}
+
+/*
+int main()
 {
     // Example input data
     std::vector<std::vector<double>> transition_matrix = {
@@ -170,6 +260,12 @@ const std::vector<int>& MarkovChain::get_state_counts() const
         {0.4, 0.1, 0.2, 0.3},
         {0.3, 0.2, 0.1, 0.4}
     };
+    // std::vector<std::vector<double>> transition_matrix = {
+    //     {0.7, 0.1, 0.1, 0.1},
+    //     {0.7, 0.1, 0.1, 0.1},
+    //     {0.7, 0.1, 0.1, 0.1},
+    //     {0.7, 0.1, 0.1, 0.1}
+    // };
     std::vector<double> initial_state = {0.2, 0.3, 0.1, 0.4};
 
     // Seed the random number generator
@@ -179,24 +275,15 @@ const std::vector<int>& MarkovChain::get_state_counts() const
     MarkovChain chain(transition_matrix, initial_state);
 
     // Perform transitions
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < 100000; ++i)
     {
         chain.transition_values();
-        std::cout << "Step " << i + 1 << ": ";
-        for (double state_prob : chain.get_current_state())
-        {
-            std::cout << state_prob << " ";
-        }
-        std::cout << '\n';
     }
 
-    // Display state counts
-    std::cout << "State counts:";
-    for (double count : chain.get_state_counts())
-    {
-        std::cout << " " << count;
-    }
-    std::cout << '\n';
+    chain.display_state_counts();
+
+    print_container(chain.calculate_stationary_distribution());
 
     return 0;
-} */
+}
+*/

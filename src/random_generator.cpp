@@ -128,4 +128,4 @@ double uniformDistribution(double lower_bound, double upper_bound)
     return lower_bound + (upper_bound - lower_bound) * random_num;
 }
 
-// TODO(guilhem): beta_distribution + finish markov_chain + some_simple_distribution
+// TODO(guilhem): beta_distribution
