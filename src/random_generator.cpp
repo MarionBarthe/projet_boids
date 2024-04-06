@@ -3,6 +3,7 @@
 
     - bool bernoulli_distribution(double p)
     - double uniform_distribution(double lower_bound, double upper_bound)
+    - int discrete_uniform_distribution(int lower_bound, int upper_bound)
 
     - int binomial_distribution(int n, double p)
     - int binomial_distribution_monte_carlo(int n, double p)
@@ -63,6 +64,16 @@ double uniform_distribution(double lower_bound, double upper_bound)
 
     // Scale and shift the random number to fit within the specified range
     return lower_bound + (upper_bound - lower_bound) * random_num;
+}
+
+// Simulate discrete uniform distribution
+int discrete_uniform_distribution(int lower_bound, int upper_bound)
+{
+    int n          = upper_bound - lower_bound + 1; // Number of states
+    int random_num = rand() % n;                    // Random number between 0 and n-1
+
+    // Shift the random number to fit within the specified range
+    return lower_bound + random_num;
 }
 
 // Simulate binomial distribution by generating a number of success with n, number of trials, and p, probability of success, using multiples Bernoulli disribution
@@ -188,6 +199,11 @@ int main()
     double lower_bound = 0.0;
     double upper_bound = 1.0;
     std::cout << "Uniform Distribution (" << lower_bound << ", " << upper_bound << "): " << uniform_distribution(lower_bound, upper_bound) << std::endl;
+
+    // Test discrete_uniform_distribution function
+    int discrete_lower_bound = 0;
+    int discrete_upper_bound = 255;
+    std::cout << "Discrete Uniform Distribution (" << discrete_lower_bound << ", " << discrete_upper_bound << "): " << discrete_uniform_distribution(discrete_lower_bound, discrete_upper_bound) << std::endl;
 
     // Test binomial_distribution function
     int n = 10;
