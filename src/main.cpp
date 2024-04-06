@@ -11,7 +11,7 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "p6/p6.h"
 #define DOCTEST_CONFIG_IMPLEMENT
-#include "Boid.hpp"
+#include "boid.hpp"
 #include "doctest/doctest.h"
 
 GLuint load_and_bind_texture(const img::Image& texture_image)
@@ -42,7 +42,7 @@ struct boids_program {
 
     boids_program()
         : m_program{
-            p6::load_shader("./shaders/3D.vs.glsl", "./shaders/tex_3D.fs.glsl")
+            p6::load_shader("../src/shaders/3D.vs.glsl", "../src/shaders/tex_3D.fs.glsl")
         }
     {
         u_MVP_matrix    = glGetUniformLocation(m_program.id(), "u_MVP_matrix");
@@ -131,8 +131,7 @@ int main()
      * LES TEXTURES *
      *********************************/
 
-    const img::Image texture_image_moon =
-        p6::load_image_buffer("assets_copy/textures/MoonMap.jpg");
+    const img::Image texture_image_moon = p6::load_image_buffer("assets_copy/textures/MoonMap.jpg");
 
     GLuint texture_object_moon = load_and_bind_texture(texture_image_moon);
 
@@ -160,7 +159,7 @@ int main()
             b.update(&ctx, boids, coeffs);
         }
         /*** IMGUI ***/
-        
+
         {
             ImGui::Begin("Boids command panel");
             ImGui::Text("Play with the parameters of the flock !");
