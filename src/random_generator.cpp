@@ -6,19 +6,22 @@
     - int discrete_uniform_distribution(int lower_bound, int upper_bound)
 
     - int binomial_distribution(int n, double p)
-    - int binomial_distribution_monte_carlo(int n, double p)
+    - int binomial_distribution_cdf(int n, double p)
 
     - int exponential_distribution(double lambda)
     - double laplace_distribution(double mu, double b)
-    - double normal_distribution(double average, double quarterType)
 
-    - double beta_distribution(double alpha, double beta): Simulates a beta distribution with parameters alpha and beta.
+    - void normal_distribution(std::vector<double>& results, double average, double quarterType)
+    - void normal_distribution_polar(std::vector<double>& results, double average, double quarterType)
+
+    - double beta_distribution(double alpha, double beta)
 */
 
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <vector>
 
 // Calculate the binomial coefficient, (n k), representing the number of ways to choose k items from a set of n distinct items
 unsigned long long binomial_coefficient(int n, int k)
@@ -49,10 +52,16 @@ unsigned long long binomial_coefficient(int n, int k)
     return coeff;
 }
 
+// Generate a random number between 0 and 1 uniformly
+double generate_random()
+{
+    return static_cast<double>(rand()) / RAND_MAX;
+}
+
 // Simulate bernoulli distribution with p, probability of success
 bool bernoulli_distribution(double p)
 {
-    double random_num = static_cast<double>(rand()) / RAND_MAX; // Random number between 0 and 1
+    double random_num = generate_random(); // Random number between 0 and 1
 
     return random_num < p; // Return 0 or 1 depending on the success
 }
@@ -60,7 +69,7 @@ bool bernoulli_distribution(double p)
 // Simulate uniform distribution with parameters lower_bound, the smallest result possible and upper_bound, the largest result possible
 double uniform_distribution(double lower_bound, double upper_bound)
 {
-    double random_num = static_cast<double>(rand()) / RAND_MAX; // Random number between 0 and 1
+    double random_num = generate_random(); // Random number between 0 and 1
 
     // Scale and shift the random number to fit within the specified range
     return lower_bound + (upper_bound - lower_bound) * random_num;
@@ -70,7 +79,15 @@ double uniform_distribution(double lower_bound, double upper_bound)
 int discrete_uniform_distribution(int lower_bound, int upper_bound)
 {
     int n          = upper_bound - lower_bound + 1; // Number of states
-    int random_num = rand() % n;                    // Random number between 0 and n-1
+    int random_num = RAND_MAX;
+
+    // Random number between 0 and a maximum divisible by n
+    while (random_num > RAND_MAX - (RAND_MAX % n))
+    {
+        random_num = rand();
+    };
+
+    random_num %= n; // Scale the number to be between 0 and n-1
 
     // Shift the random number to fit within the specified range
     return lower_bound + random_num;
@@ -87,8 +104,8 @@ int binomial_distribution(int n, double p)
     return successes;
 }
 
-// Simulate binomial distribution by generating a number of success with n, number of trials, and p, probability of success, using the Monte Carlo method
-int binomial_distribution_monte_carlo(int n, double p)
+// Simulate binomial distribution by generating a number of success with n, number of trials, and p, probability of success, using the cumulative distribution function method
+int binomial_distribution_cdf(int n, double p)
 {
     int    success_probability = 0;
     double random_threshold    = (double)rand() / RAND_MAX; // Random number between 0 and 1
@@ -108,18 +125,16 @@ int binomial_distribution_monte_carlo(int n, double p)
 }
 
 // Simulate exponential distribution by generating a time quotient, using inverse transform sampling
-int exponential_distribution(double lambda)
+double exponential_distribution(double lambda)
 {
-    double random_exp = -log(static_cast<double>(rand()) / RAND_MAX) / lambda; // Random number between 0 and 1
-
-    double random_scaled = random_exp * 9 + 1;     // Scale the random number to 1 - 10
-    return static_cast<int>(round(random_scaled)); // Round and return the result
+    double u = generate_random(); // Random number between 0 and 1
+    return -log(1 - u) / lambda;  // Application of the inverse distribution function
 }
 
-// Simulate Laplace distribution with parameters mu, location and b, scale, , using inverse transform sampling
+// Simulate Laplace distribution with parameters mu, location and b, scale, using inverse transform sampling
 double laplace_distribution(double mu, double b)
 {
-    double u = static_cast<double>(rand()) / RAND_MAX - 0.5; // Random number between -0.5 and 0.5
+    double u = generate_random() - 0.5; // Random number between -0.5 and 0.5
 
     if (u < 0)
     {
@@ -130,41 +145,64 @@ double laplace_distribution(double mu, double b)
     return mu - b * log(1 - 2 * u);
 }
 
-// Simulate normal distribution with parameters average and quarterType, using inverse method transform sampling
-double normal_distribution(double average, double quarterType)
+// Simulate normal distribution with parameters average and quarterType, using simple Box-Muller method
+void normal_distribution(std::vector<double>& results, double average, double quarterType)
 {
-    // Ensure u isn't zero to prevent division by zero
     double u = 0.0;
-    while (u == 0.0)
-    {
-        u = static_cast<double>(rand()) / RAND_MAX; // Random number between 0 and 1
-    }
-
-    // Ensure v isn't zero to prevent division by zero
     double v = 0.0;
-    while (v == 0.0)
+
+    // Ensure u and v aren't zero to prevent division by zero
+    while (u == 0.0 || v == 0.0)
     {
-        v = static_cast<double>(rand()) / RAND_MAX; // Random number between 0 and 1
+        u = generate_random(); // Random number between 0 and 1
+        v = generate_random(); // Random number between 0 and 1
     }
 
-    // Box-Muller transform to generate normally distributed variable
-    double result = sqrt(-2.0 * log(u)) * cos(2.0 * M_PI * v);
+    // Box-Muller transform to generate normally distributed variables
+    double z0 = sqrt(-2.0 * log(u)) * cos(2.0 * M_PI * v);
+    double z1 = sqrt(-2.0 * log(u)) * sin(2.0 * M_PI * v);
 
-    // Scale and shift the normal variable to match the desired mean and standard deviation
-    return result * sqrt(quarterType) + average;
+    // Scale and shift the normal variables
+    results.clear();
+    results.push_back(z0 * sqrt(quarterType) + average);
+    results.push_back(z1 * sqrt(quarterType) + average);
+}
+
+void normal_distribution_polar(std::vector<double>& results, double average, double quarterType)
+{
+    double x = 0.0;
+    double y = 0.0;
+    double u = 0.0;
+
+    // Sample appropriate x and y to have u in ]0;1[
+    while (u >= 1.0 || u == 0.0)
+    {
+        x = 2.0 * generate_random() - 1.0;
+        y = 2.0 * generate_random() - 1.0;
+        u = x * x + y * y;
+    }
+
+    // Apply Box-Muller transform
+    double z0 = x * sqrt(-2.0 * log(u) / u);
+    double z1 = y * sqrt(-2.0 * log(u) / u);
+
+    // Scale and shift the normal variables
+    results.clear();
+    results.push_back(z0 * sqrt(quarterType) + average);
+    results.push_back(z1 * sqrt(quarterType) + average);
 }
 
 // Simulate beta distribution with parameters alpha and beta, using inverse transform sampling
 double beta_distribution(double alpha, double beta)
 {
-    double random_num = static_cast<double>(rand()) / RAND_MAX; // Random number between 0 and 1
+    double u = generate_random(); // Random number between 0 and 1
 
     // Inverse transform sampling
     double cdf          = 0.0;   // Cumulative distribution function
     double step         = 0.001; // Step size for numerical integration
     double x            = 0.0;
     double beta_distrib = 0.0;
-    while (cdf < random_num)
+    while (cdf < u)
     {
         if (x < 0 || x > 1)
         {
@@ -210,8 +248,8 @@ int main()
     p     = 0.3;
     std::cout << "Binomial Distribution (n = " << n << ", p = " << p << "): " << binomial_distribution(n, p) << std::endl;
 
-    // Test binomial_distribution_monte_carlo function
-    std::cout << "Binomial Distribution (Monte Carlo) (n = " << n << ", p = " << p << "): " << binomial_distribution_monte_carlo(n, p) << std::endl;
+    // Test binomial_distribution_cdf function
+    std::cout << "Binomial Distribution (Monte Carlo) (n = " << n << ", p = " << p << "): " << binomial_distribution_cdf(n, p) << std::endl;
 
     // Test exponential_distribution function
     double lambda = 0.5;
@@ -225,7 +263,16 @@ int main()
     // Test normal_distribution function
     double average     = 0.0;
     double quarterType = 1.0;
-    std::cout << "Normal Distribution (average = " << average << ", quarterType = " << quarterType << "): " << normal_distribution(average, quarterType) << std::endl;
+
+    std::vector<double> results;
+    normal_distribution(results, average, quarterType);
+    std::cout << "Normal Distribution: " << results[0] << ", " << results[1] << "\n";
+
+    // Test normal_distribution_polar function
+
+    std::vector<double> results_polar;
+    normal_distribution_polar(results_polar, average, quarterType);
+    std::cout << "Normal Distribution Polar: " << results_polar[0] << ", " << results_polar[1] << "\n";
 
     // Test beta_distribution function
     double alpha      = 2.0;
