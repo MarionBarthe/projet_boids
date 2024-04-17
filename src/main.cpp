@@ -4,34 +4,18 @@
 #include "./glimac/common.hpp"
 #include "./glimac/default_shader.hpp"
 #include "./glimac/sphere_vertices.hpp"
+#include "boid.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/fwd.hpp"
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "p6/p6.h"
+#include "texture_manager.hpp"
+#include "vao.hpp"
+#include "vbo.hpp"
 #define DOCTEST_CONFIG_IMPLEMENT
 #include "boid.hpp"
 #include "doctest/doctest.h"
-#include "vao.hpp"
-#include "vbo.hpp"
-
-GLuint load_and_bind_texture(const img::Image& texture_image)
-{
-    GLuint texture_object = 0;
-    glGenTextures(1, &texture_object);
-    glBindTexture(GL_TEXTURE_2D, texture_object);
-
-    GLsizei width  = static_cast<GLsizei>(texture_image.width());
-    GLsizei height = static_cast<GLsizei>(texture_image.height());
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image.data());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    return texture_object;
-}
 
 struct boids_program {
     p6::Shader m_program;
@@ -108,15 +92,13 @@ int main()
     vao.specify_attribute(2, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, texCoords)));
 
     vao.unbind();
-    vbo_vertices.unbind();
+    vbo_vertices.bind();
 
     /*********************************
      * LES TEXTURES *
      *********************************/
 
-    const img::Image texture_image_moon = p6::load_image_buffer("assets_copy/textures/MoonMap.jpg");
-
-    GLuint texture_object_moon = load_and_bind_texture(texture_image_moon);
+    GLuint texture_object_moon = TextureManager::loadTexture("assets_copy/textures/MoonMap.jpg"); // Utilisation de la classe TextureManager pour charger la texture
 
     /*********************************
      * LES MATRICES *
