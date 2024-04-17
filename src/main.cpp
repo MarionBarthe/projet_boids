@@ -1,18 +1,19 @@
-#include "./glimac/FreeflyCamera.hpp" // Ajout de l'include pour la classe TrackballCamera
+#include <cstddef>
+#include <cstdlib>
+#include "./glimac/FreeflyCamera.hpp"
 #include "./glimac/common.hpp"
 #include "./glimac/default_shader.hpp"
 #include "./glimac/sphere_vertices.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/fwd.hpp"
 #include "glm/glm.hpp"
-// #include "glm/gtc/random.hpp"
-#include <cstddef>
-#include <cstdlib>
 #include "glm/gtc/type_ptr.hpp"
 #include "p6/p6.h"
 #define DOCTEST_CONFIG_IMPLEMENT
 #include "boid.hpp"
 #include "doctest/doctest.h"
+#include "vao.hpp"
+#include "vbo.hpp"
 
 GLuint load_and_bind_texture(const img::Image& texture_image)
 {
@@ -84,48 +85,30 @@ int main()
      * LE VERTEX BUFFER OBJECT *
      *********************************/
 
-    // Création d'un seul VBO
-    GLuint vbo = 0;
-    glGenBuffers(1, &vbo);
-    // Binding de ce VBO sur la cible GL_ARRAY_BUFFER
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    // Remplissage du VBO
+    // Création d'un VBO pour les vertices
+    VBO vbo_vertices;
+    vbo_vertices.bind();
 
     const std::vector<glimac::ShapeVertex> vertices =
         glimac::sphere_vertices(1.f, 32, 16);
 
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glimac::ShapeVertex), vertices.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    vbo_vertices.fill(vertices.data(), vertices.size() * sizeof(glimac::ShapeVertex), GL_STATIC_DRAW);
+    vbo_vertices.unbind();
 
     /*********************************
      * LE VERTEX ARRAY OBJECT *
      *********************************/
 
-    GLuint vao = 0;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    // Activation des attributs de vertex
-    static constexpr GLuint VERTEX_ATTR_POSITION = 0;
-    static constexpr GLuint VERTEX_ATTR_NORMAL   = 1;
-    static constexpr GLuint VERTEX_ATTR_TEXTURE  = 2;
-    glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
-    glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
-    glEnableVertexAttribArray(VERTEX_ATTR_TEXTURE);
-    // Spécification des attributs de vertex
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    VAO vao;
+    vao.bind();
+    vbo_vertices.bind();
 
-    glVertexAttribPointer(
-        VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex),
-        (const GLvoid*)offsetof(glimac::ShapeVertex, position)
-    );
-    glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)offsetof(glimac::ShapeVertex, normal));
-    glVertexAttribPointer(
-        VERTEX_ATTR_TEXTURE, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex),
-        (const GLvoid*)offsetof(glimac::ShapeVertex, texCoords)
-    );
+    vao.specify_attribute(0, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, position)));
+    vao.specify_attribute(1, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, normal)));
+    vao.specify_attribute(2, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, texCoords)));
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    vao.unbind();
+    vbo_vertices.unbind();
 
     /*********************************
      * LES TEXTURES *
@@ -175,7 +158,6 @@ int main()
          *********************************/
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glBindVertexArray(vao);
 
         ctx.mouse_dragged = [&](p6::MouseDrag drag) {
             camera.rotateLeft(-drag.delta.x * 20.f);
@@ -249,10 +231,11 @@ int main()
             glUniformMatrix4fv(boids_program.u_MV_matrix, 1, GL_FALSE, glm::value_ptr(MV_matrix));
             glUniformMatrix3fv(boids_program.u_normal_matrix, 1, GL_FALSE, glm::value_ptr(normal_matrix));
 
-            // Rendu de l'objet
+            // Utilisation des objets VAO et VBO
+            vao.bind();
             glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+            vao.unbind();
         }
-        glBindVertexArray(0);
     };
 
     glActiveTexture(GL_TEXTURE0);
@@ -260,7 +243,4 @@ int main()
 
     // Démarrer la boucle de rendu
     ctx.start();
-
-    glDeleteBuffers(1, &vbo);
-    glDeleteVertexArrays(1, &vao);
 }
