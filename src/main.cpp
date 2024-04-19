@@ -1,19 +1,21 @@
 #include <cstddef>
 #include <cstdlib>
-#include "./glimac/FreeflyCamera.hpp"
 #include "./glimac/common.hpp"
 #include "./glimac/default_shader.hpp"
 #include "./glimac/sphere_vertices.hpp"
 #include "boid.hpp"
+#include "game_object.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/fwd.hpp"
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "model_loader.hpp"
 #include "p6/p6.h"
 #include "texture_manager.hpp"
 #include "vao.hpp"
 #include "vbo.hpp"
 #define DOCTEST_CONFIG_IMPLEMENT
+#include "./glimac/FreeflyCamera.hpp"
 #include "boid.hpp"
 #include "doctest/doctest.h"
 
@@ -60,6 +62,56 @@ int main()
     //  }
 
     /*********************************
+     * CHARGEMENT DU MODÈLE *
+     *********************************/
+
+    // Charge le modèle
+    auto model = ModelLoader::loadModel("assets/models/star.obj");
+
+    /*********************************
+     * INITIALISATION DE L'OBJET STAR *
+     *********************************/
+    GameObject starObject("assets/models/star.obj", ""); // Création de l'objet "star" avec le modèle chargé
+
+    // Définition de la position, de la rotation et de l'échelle de l'objet "star"
+    starObject.setPosition(glm::vec3(0.f, 0.f, -5.f));
+    // starObject.setRotation(glm::vec3(0.f, 0.f, 0.f));
+    starObject.setScale(0.5f);
+
+    /*********************************
+     * LE VERTEX BUFFER OBJECT DU MODÈLE *
+     *********************************/
+
+    VBO vbo_model;
+    vbo_model.bind();
+
+    // Rempli le VBO avec les données du modèle
+    vbo_model.fill(model.vertices.data(), model.vertices.size() * sizeof(float), GL_STATIC_DRAW);
+    vbo_model.unbind();
+
+    /*********************************
+     * LE VERTEX ARRAY OBJECT DU MODÈLE *
+     *********************************/
+
+    VAO vao_model;
+    vao_model.bind();
+    vbo_model.bind();
+
+    // Spécifie les attributs du modèle
+    vao_model.specify_attribute(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)0);
+
+    vao_model.unbind();
+    vbo_model.bind();
+
+    /*********************************
+     * LES MATRICES POUR LE MODÈLE *
+     *********************************/
+
+    // Matrice de modèle pour le modèle
+    glm::mat4 model_matrix = glm::mat4(1.0f);
+    model_matrix           = glm::translate(model_matrix, glm::vec3(0.f, 0.f, -5.f)); // Déplace le modèle en arrière de 5 unités
+
+    /*********************************
      * INITIALIZATION
      *********************************/
 
@@ -98,7 +150,7 @@ int main()
      * LES TEXTURES *
      *********************************/
 
-    GLuint texture_object_moon = TextureManager::loadTexture("assets_copy/textures/MoonMap.jpg"); // Utilisation de la classe TextureManager pour charger la texture
+    GLuint texture_object_moon = TextureManager::loadTexture("assets/textures/MoonMap.jpg"); // Utilisation de la classe TextureManager pour charger la texture
 
     /*********************************
      * LES MATRICES *
@@ -196,10 +248,10 @@ int main()
 
         for (auto& MV_matrix : MV_matrixes)
         {
-            // Calculer la matrice ModelViewProjection (MVP)
+            // Calculer la matrice ModelViewProjection (MVP) pour les lunes
             glm::mat4 MVP_matrix = proj_matrix * view_matrix * MV_matrix;
 
-            // Calculer la matrice Normale
+            // Calculer la matrice Normale pour les lunes
             glm::mat3 normal_matrix =
                 glm::transpose(glm::inverse(glm::mat3(view_matrix * MV_matrix)));
 
@@ -213,11 +265,32 @@ int main()
             glUniformMatrix4fv(boids_program.u_MV_matrix, 1, GL_FALSE, glm::value_ptr(MV_matrix));
             glUniformMatrix3fv(boids_program.u_normal_matrix, 1, GL_FALSE, glm::value_ptr(normal_matrix));
 
-            // Utilisation des objets VAO et VBO
+            // Utilisation des objets VAO et VBO pour les lunes
             vao.bind();
             glDrawArrays(GL_TRIANGLES, 0, vertices.size());
             vao.unbind();
         }
+
+        // Calculer la matrice ModelViewProjection (MVP) pour starObject
+        glm::mat4 MVP_star = proj_matrix * view_matrix * starObject.getModelMatrix();
+
+        // Calculer la matrice Normale pour starObject
+        glm::mat3 normal_matrix_star =
+            glm::transpose(glm::inverse(glm::mat3(view_matrix * starObject.getModelMatrix())));
+
+        // Utiliser le programme de shader pour starObject
+        boids_program.m_program.use();
+        glUniform1i(boids_program.u_texture, 0);
+
+        // glActiveTexture(GL_TEXTURE0);
+        // glBindTexture(GL_TEXTURE_2D, starObject.getTextureObject());
+
+        glUniformMatrix4fv(boids_program.u_MVP_matrix, 1, GL_FALSE, glm::value_ptr(MVP_star));
+        glUniformMatrix4fv(boids_program.u_MV_matrix, 1, GL_FALSE, glm::value_ptr(starObject.getModelMatrix()));
+        glUniformMatrix3fv(boids_program.u_normal_matrix, 1, GL_FALSE, glm::value_ptr(normal_matrix_star));
+
+        // Utiliser les objets VAO et VBO pour starObject
+        starObject.draw();
     };
 
     glActiveTexture(GL_TEXTURE0);

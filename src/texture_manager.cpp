@@ -19,7 +19,6 @@ GLuint TextureManager::loadTexture(const std::string& filePath)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // Disabling the texture
-    // glBindTexture(GL_TEXTURE_2D, 0);
     unbindTexture();
 
     return textureObject;

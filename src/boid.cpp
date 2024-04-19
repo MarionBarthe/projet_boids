@@ -36,7 +36,7 @@ void Boid::update(p6::Context* ctx, const std::vector<Boid>& boids, Coeffs coeff
     if (m_position.x <= -coeffs.square_length)
         m_position.x = coeffs.square_length - 0.005f;
     else if (m_position.x >= coeffs.square_length)
-        m_position.x = - (coeffs.square_length - 0.005f);
+        m_position.x = -(coeffs.square_length - 0.005f);
 
     if (m_position.y <= -coeffs.square_length)
         m_position.y = coeffs.square_length - 0.005f;
