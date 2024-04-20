@@ -9,22 +9,22 @@
 
 class GameObject {
 public:
-    GameObject(const std::string& modelPath, const std::string& texturePath);
+    GameObject(const std::string& model_path, const std::string& texture_path);
     ~GameObject();
 
-    void      setPosition(const glm::vec3& position);
-    void      setRotation(const glm::vec3& rotation);
-    void      setScale(float scale);
-    glm::mat4 getModelMatrix() const { return m_modelMatrix; }
+    void      set_position(const glm::vec3& position);
+    void      set_rotation(const glm::vec3& rotation);
+    void      set_scale(float scale);
+    glm::mat4 get_model_matrix() const { return model_matrix; }
     void      draw() const;
 
 private:
-    int       m_dataSize;
-    VAO       m_vao;
-    VBO       m_vboVertices;
-    GLuint    m_textureObject;
-    glm::mat4 m_modelMatrix;
+    int       data_size;
+    VAO       vao;
+    VBO       vbo_vertices;
+    GLuint    texture_object;
+    glm::mat4 model_matrix;
 
-    void loadModel(const std::string& modelPath);
-    void loadTexture(const std::string& texturePath);
+    void load_model(const std::string& model_path);
+    void load_texture(const std::string& texture_path);
 };

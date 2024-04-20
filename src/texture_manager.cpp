@@ -1,36 +1,36 @@
 #include "texture_manager.hpp"
 
-GLuint TextureManager::loadTexture(const std::string& filePath)
+GLuint TextureManager::load_texture(const std::string& file_path)
 {
-    // Loading image from file
-    img::Image textureImage = p6::load_image_buffer(filePath);
+    // Load image from file
+    img::Image texture_image = p6::load_image_buffer(file_path);
 
-    // Generating the OpenGL texture object
-    GLuint textureObject = 0;
-    glGenTextures(1, &textureObject);
-    glBindTexture(GL_TEXTURE_2D, textureObject);
+    // Generate the OpenGL texture object
+    GLuint texture_object = 0;
+    glGenTextures(1, &texture_object);
+    glBindTexture(GL_TEXTURE_2D, texture_object);
 
-    // Configuring texture settings
-    GLsizei width  = static_cast<GLsizei>(textureImage.width());
-    GLsizei height = static_cast<GLsizei>(textureImage.height());
+    // Configure texture settings
+    GLsizei width  = static_cast<GLsizei>(texture_image.width());
+    GLsizei height = static_cast<GLsizei>(texture_image.height());
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureImage.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_image.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    // Disabling the texture
-    unbindTexture();
+    // Unbind the texture
+    unbind_texture();
 
-    return textureObject;
+    return texture_object;
 }
 
-void TextureManager::bindTexture(GLuint textureID, GLuint textureUnit)
+void TextureManager::bind_texture(GLuint texture_id, GLuint texture_unit)
 {
-    glActiveTexture(GL_TEXTURE0 + textureUnit);
-    glBindTexture(GL_TEXTURE_2D, textureID);
+    glActiveTexture(GL_TEXTURE0 + texture_unit);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
 }
 
-void TextureManager::unbindTexture()
+void TextureManager::unbind_texture()
 {
     glBindTexture(GL_TEXTURE_2D, 0);
 }

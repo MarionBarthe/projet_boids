@@ -8,11 +8,11 @@ public:
     TextureManager() = default;
 
     // Load a texture from a file and return its OpenGL identifier
-    static GLuint loadTexture(const std::string& filePath);
+    static GLuint load_texture(const std::string& file_path);
 
-    // Binding the texture to the specified texture unit
-    static void bindTexture(GLuint textureID, GLuint textureUnit);
+    // Bind the texture to the specified texture unit
+    static void bind_texture(GLuint texture_id, GLuint texture_unit);
 
-    // Disabling the texture
-    static void unbindTexture();
+    // Unbind the current texture
+    static void unbind_texture();
 };

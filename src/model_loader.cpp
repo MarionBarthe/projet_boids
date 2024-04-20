@@ -3,7 +3,7 @@
 #include "model_loader.hpp"
 #include <iostream>
 
-ModelLoader::Model ModelLoader::loadModel(const std::string& filePath)
+ModelLoader::Model ModelLoader::load_model(const std::string& file_path)
 {
     Model                    model;
     tinyobj::ObjReaderConfig reader_config;
@@ -11,7 +11,7 @@ ModelLoader::Model ModelLoader::loadModel(const std::string& filePath)
 
     tinyobj::ObjReader reader;
 
-    if (!reader.ParseFromFile(filePath, reader_config))
+    if (!reader.ParseFromFile(file_path, reader_config))
     {
         if (!reader.Error().empty())
         {
@@ -28,19 +28,19 @@ ModelLoader::Model ModelLoader::loadModel(const std::string& filePath)
     const auto& attrib = reader.GetAttrib();
     const auto& shapes = reader.GetShapes();
 
-    model = processModel(attrib, shapes);
+    model = process_model(attrib, shapes);
 
     return model;
 }
 
-ModelLoader::Model ModelLoader::processModel(const tinyobj::attrib_t& attrib, const std::vector<tinyobj::shape_t>& shapes)
+ModelLoader::Model ModelLoader::process_model(const tinyobj::attrib_t& attrib, const std::vector<tinyobj::shape_t>& shapes)
 {
     Model model;
 
     // Loop over shapes
     for (const auto& shape : shapes)
     {
-        // Loop over faces(polygon)
+        // Loop over faces (polygon)
         size_t index_offset = 0;
         for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++)
         {
@@ -49,7 +49,7 @@ ModelLoader::Model ModelLoader::processModel(const tinyobj::attrib_t& attrib, co
             // Loop over vertices in the face.
             for (size_t v = 0; v < fv; v++)
             {
-                // access to vertex
+                // Access to vertex
                 const tinyobj::index_t& idx = shape.mesh.indices[index_offset + v];
                 const float             vx  = attrib.vertices[3 * idx.vertex_index + 0];
                 const float             vy  = attrib.vertices[3 * idx.vertex_index + 1];
@@ -58,7 +58,7 @@ ModelLoader::Model ModelLoader::processModel(const tinyobj::attrib_t& attrib, co
                 model.vertices.push_back(vy);
                 model.vertices.push_back(vz);
 
-                // Check if `normal_index` is zero or positive. negative = no normal data
+                // Check if `normal_index` is zero or positive. A negative index indicates no normal data.
                 if (idx.normal_index >= 0)
                 {
                     const float nx = attrib.normals[3 * idx.normal_index + 0];
@@ -69,7 +69,7 @@ ModelLoader::Model ModelLoader::processModel(const tinyobj::attrib_t& attrib, co
                     model.normals.push_back(nz);
                 }
 
-                // Check if `texcoord_index` is zero or positive. negative = no texcoord data
+                // Check if `texcoord_index` is zero or positive. A negative index indicates no texcoord data.
                 if (idx.texcoord_index >= 0)
                 {
                     const float tx = attrib.texcoords[2 * idx.texcoord_index + 0];
@@ -80,8 +80,7 @@ ModelLoader::Model ModelLoader::processModel(const tinyobj::attrib_t& attrib, co
             }
             index_offset += fv;
 
-            // per-face material
-            shape.mesh.material_ids[f];
+            // Per-face material processing could be added here
         }
     }
 

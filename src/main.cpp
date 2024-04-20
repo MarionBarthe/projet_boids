@@ -1,10 +1,12 @@
 #include <cstddef>
 #include <cstdlib>
-#include "./glimac/common.hpp"
-#include "./glimac/default_shader.hpp"
-#include "./glimac/sphere_vertices.hpp"
+#include <vector>
 #include "boid.hpp"
 #include "game_object.hpp"
+#include "glimac/FreeflyCamera.hpp"
+#include "glimac/common.hpp"
+#include "glimac/default_shader.hpp"
+#include "glimac/sphere_vertices.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/fwd.hpp"
 #include "glm/glm.hpp"
@@ -15,27 +17,23 @@
 #include "vao.hpp"
 #include "vbo.hpp"
 #define DOCTEST_CONFIG_IMPLEMENT
-#include "./glimac/FreeflyCamera.hpp"
-#include "boid.hpp"
 #include "doctest/doctest.h"
 
-struct boids_program {
-    p6::Shader m_program;
+struct BoidsProgram {
+    p6::Shader program;
 
     GLint u_MVP_matrix;
     GLint u_MV_matrix;
     GLint u_normal_matrix;
     GLint u_texture;
 
-    boids_program()
-        : m_program{
-            p6::load_shader("../src/shaders/3D.vs.glsl", "../src/shaders/tex_3D.fs.glsl")
-        }
+    BoidsProgram()
+        : program{p6::load_shader("../src/shaders/3D.vs.glsl", "../src/shaders/tex_3D.fs.glsl")}
     {
-        u_MVP_matrix    = glGetUniformLocation(m_program.id(), "u_MVP_matrix");
-        u_MV_matrix     = glGetUniformLocation(m_program.id(), "u_MV_matrix");
-        u_normal_matrix = glGetUniformLocation(m_program.id(), "u_normal_matrix");
-        u_texture       = glGetUniformLocation(m_program.id(), "u_texture");
+        u_MVP_matrix    = glGetUniformLocation(program.id(), "u_MVP_matrix");
+        u_MV_matrix     = glGetUniformLocation(program.id(), "u_MV_matrix");
+        u_normal_matrix = glGetUniformLocation(program.id(), "u_normal_matrix");
+        u_texture       = glGetUniformLocation(program.id(), "u_texture");
     }
 };
 
@@ -43,159 +41,97 @@ int main()
 {
     auto ctx = p6::Context{{1280, 720, "Boids boids boids !"}};
     ctx.maximize_window();
-
     glEnable(GL_DEPTH_TEST);
 
-    // Initialisation de la caméra
+    // Initialize the camera
     FreeflyCamera camera;
 
-    // Cube cube;
+    // Initialize coefficients
     Coeffs coeffs;
 
+    // Create a vector of Boid objects
     std::vector<Boid> boids(20);
 
-    // TODO : faire une struct Dimensions pour cube_width etc ?
-    //  for (auto &boid : boids) {
-    //    boid.x = glm::linearRand(-cube_width / 2.0f, cube_width / 2.0f);
-    //    boid.y = glm::linearRand(-cube_height / 2.0f, cube_height / 2.0f);
-    //    boid.z = glm::linearRand(-cube_depth / 2.0f, cube_depth / 2.0f);
-    //  }
+    // Load the model
+    auto model = ModelLoader::load_model("assets/models/star.obj");
 
-    /*********************************
-     * CHARGEMENT DU MODÈLE *
-     *********************************/
+    // Initialize the "star" GameObject with the loaded model
+    GameObject star_object("assets/models/star.obj", ""); // Create the "star" object with the loaded model
+    star_object.set_position(glm::vec3(0.f, 0.f, -5.f));
+    star_object.set_scale(0.25f);
 
-    // Charge le modèle
-    auto model = ModelLoader::loadModel("assets/models/star.obj");
-
-    /*********************************
-     * INITIALISATION DE L'OBJET STAR *
-     *********************************/
-    GameObject starObject("assets/models/star.obj", ""); // Création de l'objet "star" avec le modèle chargé
-
-    // Définition de la position, de la rotation et de l'échelle de l'objet "star"
-    starObject.setPosition(glm::vec3(0.f, 0.f, -5.f));
-    // starObject.setRotation(glm::vec3(0.f, 0.f, 0.f));
-    starObject.setScale(0.5f);
-
-    /*********************************
-     * LE VERTEX BUFFER OBJECT DU MODÈLE *
-     *********************************/
-
+    // Vertex Buffer Object (VBO) setup for the model
     VBO vbo_model;
     vbo_model.bind();
-
-    // Rempli le VBO avec les données du modèle
     vbo_model.fill(model.vertices.data(), model.vertices.size() * sizeof(float), GL_STATIC_DRAW);
     vbo_model.unbind();
 
-    /*********************************
-     * LE VERTEX ARRAY OBJECT DU MODÈLE *
-     *********************************/
-
+    // Vertex Array Object (VAO) setup for the model
     VAO vao_model;
     vao_model.bind();
     vbo_model.bind();
-
-    // Spécifie les attributs du modèle
     vao_model.specify_attribute(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)0);
-
     vao_model.unbind();
     vbo_model.bind();
 
-    /*********************************
-     * LES MATRICES POUR LE MODÈLE *
-     *********************************/
+    // Boids shader program
+    BoidsProgram boids_program{};
 
-    // Matrice de modèle pour le modèle
-    glm::mat4 model_matrix = glm::mat4(1.0f);
-    model_matrix           = glm::translate(model_matrix, glm::vec3(0.f, 0.f, -5.f)); // Déplace le modèle en arrière de 5 unités
-
-    /*********************************
-     * INITIALIZATION
-     *********************************/
-
-    boids_program boids_program{};
-
-    /*********************************
-     * LE VERTEX BUFFER OBJECT *
-     *********************************/
-
-    // Création d'un VBO pour les vertices
+    // Create a VBO for vertices using sphere data
     VBO vbo_vertices;
     vbo_vertices.bind();
-
-    const std::vector<glimac::ShapeVertex> vertices =
-        glimac::sphere_vertices(1.f, 32, 16);
-
+    const std::vector<glimac::ShapeVertex> vertices = glimac::sphere_vertices(1.f, 32, 16);
     vbo_vertices.fill(vertices.data(), vertices.size() * sizeof(glimac::ShapeVertex), GL_STATIC_DRAW);
     vbo_vertices.unbind();
 
-    /*********************************
-     * LE VERTEX ARRAY OBJECT *
-     *********************************/
-
+    // Set up the VAO for spheres
     VAO vao;
     vao.bind();
     vbo_vertices.bind();
-
     vao.specify_attribute(0, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, position)));
     vao.specify_attribute(1, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, normal)));
     vao.specify_attribute(2, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, texCoords)));
-
     vao.unbind();
-    vbo_vertices.bind();
+    vbo_vertices.unbind();
 
-    /*********************************
-     * LES TEXTURES *
-     *********************************/
+    // Load textures
+    GLuint texture_object_moon = TextureManager::load_texture("assets/textures/MoonMap.jpg");
 
-    GLuint texture_object_moon = TextureManager::loadTexture("assets/textures/MoonMap.jpg"); // Utilisation de la classe TextureManager pour charger la texture
-
-    /*********************************
-     * LES MATRICES *
-     *********************************/
-
-    glm::mat4 proj_matrix   = glm::mat4(1.0f);
-    glm::mat4 normal_matrix = glm::mat4(1.0f);
-
+    // Matrix setup
+    glm::mat4              proj_matrix   = glm::mat4(1.0f);
+    glm::mat4              normal_matrix = glm::mat4(1.0f);
     std::vector<glm::vec3> rotation_axes;
     for (int i = 0; i < 32; ++i)
     {
-        rotation_axes.push_back(
-            glm::sphericalRand(1.0f)
-        ); // Random axis of rotation
+        rotation_axes.push_back(glm::sphericalRand(1.0f)); // Random axis of rotation
     }
 
-    // Déclaration de la boucle de rendu
+    // Render loop
     ctx.update = [&]() {
-        /*** on update les boids ***/
+        // Update boids
         for (auto& b : boids)
         {
             b.draw(ctx, coeffs.radius_awareness);
             b.update(&ctx, boids, coeffs);
         }
-        /*** IMGUI ***/
 
-        {
-            ImGui::Begin("Boids command panel");
-            ImGui::Text("Play with the parameters of the flock !");
-            // ImGui::Checkbox("Demo Window", &show_demo_window);
-            ImGui::SeparatorText("Rules");
+        // ImGui setup
+        ImGui::Begin("Boids command panel");
+        ImGui::Text("Play with the parameters of the flock!");
+        coeffs.draw_Gui();
+        ImGui::End();
 
-            coeffs.draw_Gui();
-
-            ImGui::End();
-        }
-        /*********************************
-         * RENDERING
-         *********************************/
-
+        // Clear buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // Handle camera input
         ctx.mouse_dragged = [&](p6::MouseDrag drag) {
             camera.rotateLeft(-drag.delta.x * 20.f);
             camera.rotateUp(-drag.delta.y * 20.f);
+        };
+
+        ctx.mouse_scrolled = [&](p6::MouseScroll scroll) {
+            camera.moveFront(scroll.dy * 0.1);
         };
 
         if (ctx.key_is_pressed(GLFW_KEY_W))
@@ -215,87 +151,46 @@ int main()
             camera.moveLeft(0.1);
         }
 
-        ctx.mouse_scrolled = [&](p6::MouseScroll scroll) {
-            camera.moveFront(scroll.dy * 0.1);
-        };
-        // Obtention de la matrice de vue depuis la caméra
+        // Get the view matrix from the camera
         glm::mat4 view_matrix = camera.getViewMatrix();
+        proj_matrix           = glm::perspective(glm::radians(70.f), ctx.aspect_ratio(), 0.1f, 100.f);
 
-        proj_matrix =
-            glm::perspective(glm::radians(70.f), ctx.aspect_ratio(), 0.1f, 100.f);
-
-        std::vector<glm::mat4> MV_matrixes = {};
-
-        // Définir les dimensions du cube
-        float cube_width  = 4.0f;
-        float cube_height = 4.0f;
-        float cube_depth  = 4.0f;
-
+        // Rendering the boids as moons
         for (const auto& boid : boids)
         {
-            glm::mat4 moon = glm::mat4(1.0f);
+            glm::mat4 MV_matrix = glm::translate(glm::mat4(1.0f), boid.get_position());
+            MV_matrix           = glm::rotate(MV_matrix, ctx.time(), rotation_axes[0]); // Constant rotation for the example
+            MV_matrix           = glm::scale(MV_matrix, glm::vec3(0.2f));               // Scale down the moon
 
-            // Positionner chaque sphère à la position du boid
-            glm::vec3 sphere_position = boid.get_position() - glm::vec3(0.f, 0.f, -5.f);
+            glm::mat4 MVP_matrix    = proj_matrix * view_matrix * MV_matrix;
+            glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(view_matrix * MV_matrix)));
 
-            moon = glm::translate(moon, sphere_position);
-
-            moon = glm::rotate(moon, ctx.time(),
-                               rotation_axes[0]); // Rotation constante pour l'exemple
-            moon = glm::scale(moon, glm::vec3(0.2f));
-            MV_matrixes.push_back(moon);
-        }
-
-        for (auto& MV_matrix : MV_matrixes)
-        {
-            // Calculer la matrice ModelViewProjection (MVP) pour les lunes
-            glm::mat4 MVP_matrix = proj_matrix * view_matrix * MV_matrix;
-
-            // Calculer la matrice Normale pour les lunes
-            glm::mat3 normal_matrix =
-                glm::transpose(glm::inverse(glm::mat3(view_matrix * MV_matrix)));
-
-            boids_program.m_program.use();
+            boids_program.program.use();
             glUniform1i(boids_program.u_texture, 0);
-
-            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, texture_object_moon);
-
             glUniformMatrix4fv(boids_program.u_MVP_matrix, 1, GL_FALSE, glm::value_ptr(MVP_matrix));
             glUniformMatrix4fv(boids_program.u_MV_matrix, 1, GL_FALSE, glm::value_ptr(MV_matrix));
             glUniformMatrix3fv(boids_program.u_normal_matrix, 1, GL_FALSE, glm::value_ptr(normal_matrix));
 
-            // Utilisation des objets VAO et VBO pour les lunes
             vao.bind();
             glDrawArrays(GL_TRIANGLES, 0, vertices.size());
             vao.unbind();
         }
 
-        // Calculer la matrice ModelViewProjection (MVP) pour starObject
-        glm::mat4 MVP_star = proj_matrix * view_matrix * starObject.getModelMatrix();
-
-        // Calculer la matrice Normale pour starObject
-        glm::mat3 normal_matrix_star =
-            glm::transpose(glm::inverse(glm::mat3(view_matrix * starObject.getModelMatrix())));
-
-        // Utiliser le programme de shader pour starObject
-        boids_program.m_program.use();
+        // Render the star object
+        glm::mat4 MVP_star           = proj_matrix * view_matrix * star_object.get_model_matrix();
+        glm::mat3 normal_matrix_star = glm::transpose(glm::inverse(glm::mat3(view_matrix * star_object.get_model_matrix())));
+        boids_program.program.use();
         glUniform1i(boids_program.u_texture, 0);
-
-        // glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, starObject.getTextureObject());
-
         glUniformMatrix4fv(boids_program.u_MVP_matrix, 1, GL_FALSE, glm::value_ptr(MVP_star));
-        glUniformMatrix4fv(boids_program.u_MV_matrix, 1, GL_FALSE, glm::value_ptr(starObject.getModelMatrix()));
+        glUniformMatrix4fv(boids_program.u_MV_matrix, 1, GL_FALSE, glm::value_ptr(star_object.get_model_matrix()));
         glUniformMatrix3fv(boids_program.u_normal_matrix, 1, GL_FALSE, glm::value_ptr(normal_matrix_star));
-
-        // Utiliser les objets VAO et VBO pour starObject
-        starObject.draw();
+        star_object.draw();
     };
 
-    glActiveTexture(GL_TEXTURE0);
+    // Unbind all textures
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    // Démarrer la boucle de rendu
+    // Start the render loop
     ctx.start();
 }

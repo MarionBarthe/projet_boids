@@ -13,8 +13,8 @@ public:
         std::vector<unsigned int> indices;
     };
 
-    static Model loadModel(const std::string& filePath);
+    static Model load_model(const std::string& file_path);
 
 private:
-    static Model processModel(const tinyobj::attrib_t& attrib, const std::vector<tinyobj::shape_t>& shapes);
+    static Model process_model(const tinyobj::attrib_t& attrib, const std::vector<tinyobj::shape_t>& shapes);
 };
