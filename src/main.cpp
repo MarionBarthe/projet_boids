@@ -26,6 +26,8 @@ struct BoidsProgram {
     GLint u_MV_matrix;
     GLint u_normal_matrix;
     GLint u_texture;
+    GLint u_color;   // Uniform location for color
+    GLint use_color; // Uniform location for use_color flag
 
     BoidsProgram()
         : program{p6::load_shader("../src/shaders/3D.vs.glsl", "../src/shaders/tex_3D.fs.glsl")}
@@ -34,12 +36,14 @@ struct BoidsProgram {
         u_MV_matrix     = glGetUniformLocation(program.id(), "u_MV_matrix");
         u_normal_matrix = glGetUniformLocation(program.id(), "u_normal_matrix");
         u_texture       = glGetUniformLocation(program.id(), "u_texture");
+        u_color         = glGetUniformLocation(program.id(), "u_color");
+        use_color       = glGetUniformLocation(program.id(), "use_color");
     }
 };
 
 int main()
 {
-    auto ctx = p6::Context{{1280, 720, "Boids boids boids !"}};
+    auto ctx = p6::Context{{1280, 720, "Boids boids boids!"}};
     ctx.maximize_window();
     glEnable(GL_DEPTH_TEST);
 
@@ -52,30 +56,16 @@ int main()
     // Create a vector of Boid objects
     std::vector<Boid> boids(20);
 
-    // Load the model
-    auto model = ModelLoader::load_model("assets/models/star.obj");
+    // Boids shader program
+    BoidsProgram boids_program{};
 
-    // Initialize the "star" GameObject with the loaded model
-    GameObject star_object("assets/models/star.obj", ""); // Create the "star" object with the loaded model
+    // Initialize the "star" GameObject with the loaded model and a color
+    GameObject star_object("assets/models/astronout.obj", glm::vec3(0.0f, 1.0f, 1.0f)); // Now initializing with a color
     star_object.set_position(glm::vec3(0.f, 0.f, -5.f));
     star_object.set_scale(0.25f);
 
-    // Vertex Buffer Object (VBO) setup for the model
-    VBO vbo_model;
-    vbo_model.bind();
-    vbo_model.fill(model.vertices.data(), model.vertices.size() * sizeof(float), GL_STATIC_DRAW);
-    vbo_model.unbind();
-
-    // Vertex Array Object (VAO) setup for the model
-    VAO vao_model;
-    vao_model.bind();
-    vbo_model.bind();
-    vao_model.specify_attribute(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)0);
-    vao_model.unbind();
-    vbo_model.bind();
-
-    // Boids shader program
-    BoidsProgram boids_program{};
+    // Load texture for the moon rendering
+    GLuint texture_object_moon = TextureManager::load_texture("assets/textures/MoonMap.jpg");
 
     // Create a VBO for vertices using sphere data
     VBO vbo_vertices;
@@ -94,17 +84,9 @@ int main()
     vao.unbind();
     vbo_vertices.unbind();
 
-    // Load textures
-    GLuint texture_object_moon = TextureManager::load_texture("assets/textures/MoonMap.jpg");
-
-    // Matrix setup
-    glm::mat4              proj_matrix   = glm::mat4(1.0f);
-    glm::mat4              normal_matrix = glm::mat4(1.0f);
-    std::vector<glm::vec3> rotation_axes;
-    for (int i = 0; i < 32; ++i)
-    {
-        rotation_axes.push_back(glm::sphericalRand(1.0f)); // Random axis of rotation
-    }
+    // Generate rotation axes for each boid
+    std::vector<glm::vec3> rotation_axes(boids.size());
+    std::generate(rotation_axes.begin(), rotation_axes.end(), []() { return glm::sphericalRand(1.0f); });
 
     // Render loop
     ctx.update = [&]() {
@@ -153,21 +135,24 @@ int main()
 
         // Get the view matrix from the camera
         glm::mat4 view_matrix = camera.getViewMatrix();
-        proj_matrix           = glm::perspective(glm::radians(70.f), ctx.aspect_ratio(), 0.1f, 100.f);
+        glm::mat4 proj_matrix = glm::perspective(glm::radians(70.f), ctx.aspect_ratio(), 0.1f, 100.f);
+
+        // Use the shader program
+        boids_program.program.use();
 
         // Rendering the boids as moons
-        for (const auto& boid : boids)
+        for (int i = 0; i < boids.size(); i++)
         {
-            glm::mat4 MV_matrix = glm::translate(glm::mat4(1.0f), boid.get_position());
-            MV_matrix           = glm::rotate(MV_matrix, ctx.time(), rotation_axes[0]); // Constant rotation for the example
+            glm::mat4 MV_matrix = glm::translate(glm::mat4(1.0f), boids[i].get_position());
+            MV_matrix           = glm::rotate(MV_matrix, ctx.time(), rotation_axes[i]); // Rotation using generated axis
             MV_matrix           = glm::scale(MV_matrix, glm::vec3(0.2f));               // Scale down the moon
 
             glm::mat4 MVP_matrix    = proj_matrix * view_matrix * MV_matrix;
             glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(view_matrix * MV_matrix)));
 
-            boids_program.program.use();
             glUniform1i(boids_program.u_texture, 0);
             glBindTexture(GL_TEXTURE_2D, texture_object_moon);
+            glUniform1i(boids_program.use_color, 0); // Signal to use texture instead of color
             glUniformMatrix4fv(boids_program.u_MVP_matrix, 1, GL_FALSE, glm::value_ptr(MVP_matrix));
             glUniformMatrix4fv(boids_program.u_MV_matrix, 1, GL_FALSE, glm::value_ptr(MV_matrix));
             glUniformMatrix3fv(boids_program.u_normal_matrix, 1, GL_FALSE, glm::value_ptr(normal_matrix));
@@ -177,19 +162,23 @@ int main()
             vao.unbind();
         }
 
-        // Render the star object
+        // Render the star object with updated shader uniforms for color rendering
+        glm::mat4 model_matrix_star  = star_object.get_model_matrix();
+        glm::mat4 MV_matrix_star     = view_matrix * model_matrix_star;
+        glm::mat3 normal_matrix_star = glm::transpose(glm::inverse(glm::mat3(view_matrix * MV_matrix_star)));
         glm::mat4 MVP_star           = proj_matrix * view_matrix * star_object.get_model_matrix();
-        glm::mat3 normal_matrix_star = glm::transpose(glm::inverse(glm::mat3(view_matrix * star_object.get_model_matrix())));
-        boids_program.program.use();
-        glUniform1i(boids_program.u_texture, 0);
-        glUniformMatrix4fv(boids_program.u_MVP_matrix, 1, GL_FALSE, glm::value_ptr(MVP_star));
-        glUniformMatrix4fv(boids_program.u_MV_matrix, 1, GL_FALSE, glm::value_ptr(star_object.get_model_matrix()));
-        glUniformMatrix3fv(boids_program.u_normal_matrix, 1, GL_FALSE, glm::value_ptr(normal_matrix_star));
-        star_object.draw();
-    };
 
-    // Unbind all textures
-    glBindTexture(GL_TEXTURE_2D, 0);
+        boids_program.program.use(); // Assurez-vous d'utiliser le programme de shader
+
+        glUniform1i(boids_program.u_texture, 0); // Définir l'uniforme de texture
+        glUniform1i(boids_program.use_color, 1); // Signal pour utiliser la couleur au lieu de la texture
+        glUniformMatrix3fv(boids_program.u_normal_matrix, 1, GL_FALSE, glm::value_ptr(normal_matrix_star));
+        glUniform3fv(boids_program.u_color, 1, glm::value_ptr(star_object.get_base_color()));
+        glUniformMatrix4fv(boids_program.u_MVP_matrix, 1, GL_FALSE, glm::value_ptr(MVP_star));
+        glUniformMatrix4fv(boids_program.u_MV_matrix, 1, GL_FALSE, glm::value_ptr(MV_matrix_star));
+
+        star_object.draw(); // Dessiner l'étoile
+    };
 
     // Start the render loop
     ctx.start();
