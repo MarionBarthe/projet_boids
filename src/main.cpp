@@ -178,11 +178,14 @@ int main()
     GameObject astronaut_object("assets/models/astronaut.obj", "assets/textures/astronaut_texture.jpg");
     astronaut_object.set_position(glm::vec3(0.f, 0.f, -5.f));
     astronaut_object.set_scale(0.25f);
-    astronaut_object.set_factors({0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, 50.0f);
+    astronaut_object.set_factors({1.f, 0.5f, 0.5f}, {1.f, 0.5f, 0.5f}, 100.0f);
 
     GameObject star_object("assets/models/star.obj", glm::vec3(0.0f, 1.0f, 1.0f));
     star_object.set_position(glm::vec3(0.f, 0.f, -1.f));
     star_object.set_scale(0.01f);
+
+    GameObject star_object_2("assets/models/star.obj", glm::vec3(1.0f, 0.0f, 0.0f));
+    star_object_2.set_scale(0.01f);
 
     GameObject space_object("assets/models/space.obj", "assets/textures/space_texture.jpg");
     space_object.set_scale(0.1f);
@@ -245,10 +248,11 @@ int main()
         star_object.set_position(lightPosition);
         lights[0].position = glm::vec3(view_matrix * glm::vec4(lightPosition, 1.0));
 
-        astronaut_object.move_y(-1);
+        astronaut_object.move_y(1.2f);
+        star_object_2.set_position(astronaut_object.get_position());
         lights[1].position  = glm::vec3(view_matrix * glm::vec4(astronaut_object.get_position(), 1.0));
-        lights[1].intensity = glm::vec3(1.0f, 1.0f, 1.0f);
-        astronaut_object.move_y(1);
+        lights[1].intensity = glm::vec3(1.f, 0.8f, 0.8f);
+        astronaut_object.move_y(-1.2f);
 
         boids_program.program.use();
         glUniform3fv(boids_program.u_light_pos_vs_0, 1, glm::value_ptr(lights[0].position));
@@ -280,6 +284,7 @@ int main()
         render_game_object(astronaut_object, view_matrix, proj_matrix, boids_program);
         render_game_object(space_object, view_matrix, proj_matrix, boids_program);
         render_game_object(star_object, view_matrix, proj_matrix, boids_program);
+        render_game_object(star_object_2, view_matrix, proj_matrix, boids_program);
     };
 
     ctx.start();

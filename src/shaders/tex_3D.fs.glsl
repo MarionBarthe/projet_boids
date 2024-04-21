@@ -37,7 +37,7 @@ vec3 blinn_phong_lighting(int light_index, vec3 normal, vec3 frag_pos) {
     float linear = 0.05;   // Very low linear coefficient
     float quadratic = 0.005; // Very low quadratic coefficient
 
-    float attenuation = 1.0 / (constant + linear * distance + quadratic * distance * distance);
+    float attenuation = 1.0 / ((constant + linear * distance) + (quadratic * (distance * distance)));
 
     vec3 light_intensity = u_lights[light_index].intensity * attenuation;
     vec3 diffuse_color = light_intensity * u_kd * diffuse_factor;
