@@ -7,12 +7,14 @@ GameObject::GameObject(const std::string& model_path, const std::string& texture
 {
     load_model(model_path);
     load_texture(texture_path);
+    set_factors({1.0f, 1.0f, 1.0f}, {0.5f, 0.5f, 0.5f}, 64.0f);
 }
 
 GameObject::GameObject(const std::string& model_path, const glm::vec3& color)
     : use_texture(false), model_matrix(1.0f), base_color(color)
 {
     load_model(model_path);
+    set_factors({1.0f, 1.0f, 1.0f}, {0.5f, 0.5f, 0.5f}, 64.0f);
 }
 
 GameObject::~GameObject()
@@ -35,6 +37,13 @@ void GameObject::set_rotation(const glm::vec3& rotation)
 void GameObject::set_scale(float scale)
 {
     model_matrix = glm::scale(model_matrix, glm::vec3(scale));
+}
+
+void GameObject::set_factors(const glm::vec3& newDiffuse, const glm::vec3& newSpecular, float newShininess)
+{
+    diffuse_factor   = newDiffuse;
+    specular_factor  = newSpecular;
+    shininess_factor = newShininess;
 }
 
 void GameObject::draw() const

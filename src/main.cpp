@@ -24,19 +24,35 @@ struct BoidsProgram {
     GLint u_MVP_matrix;
     GLint u_MV_matrix;
     GLint u_normal_matrix;
+
     GLint u_texture;
     GLint u_color;
-    GLint use_color;
+    GLint u_use_color;
+
+    GLint u_kd;
+    GLint u_ks;
+    GLint u_shininess;
+
+    GLint u_light_pos_vs;
+    GLint u_light_intensity;
 
     BoidsProgram()
-        : program{p6::load_shader("../src/shaders/3D.vs.glsl", "../src/shaders/tex_3D.fs.glsl")}
+        : program{p6::load_shader(
+            "../src/shaders/3D.vs.glsl",
+            "../src/shaders/tex_3D.fs.glsl"
+        )}
+        , u_MVP_matrix(glGetUniformLocation(program.id(), "u_MVP_matrix"))
+        , u_MV_matrix(glGetUniformLocation(program.id(), "u_MV_matrix"))
+        , u_normal_matrix(glGetUniformLocation(program.id(), "u_normal_matrix"))
+        , u_texture(glGetUniformLocation(program.id(), "u_texture"))
+        , u_color(glGetUniformLocation(program.id(), "u_color"))
+        , u_use_color(glGetUniformLocation(program.id(), "u_use_color"))
+        , u_kd(glGetUniformLocation(program.id(), "u_kd"))
+        , u_ks(glGetUniformLocation(program.id(), "u_ks"))
+        , u_shininess(glGetUniformLocation(program.id(), "u_shininess"))
+        , u_light_pos_vs(glGetUniformLocation(program.id(), "u_light_pos_vs"))
+        , u_light_intensity(glGetUniformLocation(program.id(), "u_light_intensity"))
     {
-        u_MVP_matrix    = glGetUniformLocation(program.id(), "u_MVP_matrix");
-        u_MV_matrix     = glGetUniformLocation(program.id(), "u_MV_matrix");
-        u_normal_matrix = glGetUniformLocation(program.id(), "u_normal_matrix");
-        u_texture       = glGetUniformLocation(program.id(), "u_texture");
-        u_color         = glGetUniformLocation(program.id(), "u_color");
-        use_color       = glGetUniformLocation(program.id(), "use_color");
     }
 };
 
@@ -75,19 +91,24 @@ void renderGameObject(GameObject& object, const glm::mat4& view_matrix, const gl
     glm::mat4 MVP_matrix    = proj_matrix * view_matrix * model_matrix;
 
     program.program.use();
+
     glUniformMatrix4fv(program.u_MVP_matrix, 1, GL_FALSE, glm::value_ptr(MVP_matrix));
     glUniformMatrix4fv(program.u_MV_matrix, 1, GL_FALSE, glm::value_ptr(MV_matrix));
     glUniformMatrix3fv(program.u_normal_matrix, 1, GL_FALSE, glm::value_ptr(normal_matrix));
+
+    glUniform3fv(program.u_kd, 1, glm::value_ptr(object.get_diffuse_factor()));
+    glUniform3fv(program.u_ks, 1, glm::value_ptr(object.get_specular_factor()));
+    glUniform1f(program.u_shininess, object.get_shininess_factor());
 
     if (object.get_use_texture())
     {
         glUniform1i(program.u_texture, 0); // Bind texture unit 0
         glBindTexture(GL_TEXTURE_2D, object.get_texture());
-        glUniform1i(program.use_color, 0); // Signal to use texture
+        glUniform1i(program.u_use_color, 0); // Signal to use texture
     }
     else
     {
-        glUniform1i(program.use_color, 1);                                         // Signal to use color
+        glUniform1i(program.u_use_color, 1);                                       // Signal to use color
         glUniform3fv(program.u_color, 1, glm::value_ptr(object.get_base_color())); // Send the color to the shader
     }
 
@@ -96,7 +117,7 @@ void renderGameObject(GameObject& object, const glm::mat4& view_matrix, const gl
 
 int main()
 {
-    auto ctx = p6::Context{{1280, 720, "Boids boids boids!"}};
+    auto ctx = p6::Context{{1280, 720, "Space Boids - Barthe & Duval"}};
     ctx.maximize_window();
     glEnable(GL_DEPTH_TEST);
 
@@ -108,13 +129,15 @@ int main()
     GameObject astronaut_object("assets/models/astronaut.obj", "assets/textures/astronaut_texture.jpg");
     astronaut_object.set_position(glm::vec3(0.f, 0.f, -5.f));
     astronaut_object.set_scale(0.25f);
+    astronaut_object.set_factors({0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, 50.0f);
 
     GameObject star_object("assets/models/star.obj", glm::vec3(0.0f, 1.0f, 1.0f));
     star_object.set_position(glm::vec3(0.f, 0.f, -1.f));
     star_object.set_scale(0.01f);
 
     GameObject space_object("assets/models/space.obj", "assets/textures/space_texture.jpg");
-    space_object.set_scale(0.5f);
+    space_object.set_scale(0.05f);
+    space_object.set_factors({0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, 120.0f);
 
     GLuint texture_object_moon = TextureManager::load_texture("assets/textures/MoonMap.jpg");
 
@@ -139,6 +162,12 @@ int main()
     float last_x = 0;
     float last_y = 0;
 
+    // Définition de la position initiale et du mouvement de la lumière
+    glm::vec3 lightPosition(0.0f, 0.0f, 0.0f);                 // Position initiale de la lumière
+    float     lightMotionRadius = 10.0f;                       // Rayon du mouvement de la lumière
+    float     lightMotionSpeed  = 0.5f;                        // Vitesse du mouvement de la lumière
+    glm::vec3 lightIntensity    = glm::vec3(2.0f, 2.0f, 2.0f); // Intensité de lumière blanche
+
     ctx.update = [&]() {
         for (auto& b : boids)
         {
@@ -158,7 +187,16 @@ int main()
         glm::mat4 view_matrix = camera.get_view_matrix();
         glm::mat4 proj_matrix = glm::perspective(glm::radians(70.f), ctx.aspect_ratio(), 0.1f, 100.f);
 
+        // Update light position
+        float time      = ctx.time();
+        lightPosition.x = sin(time * lightMotionSpeed) * lightMotionRadius;
+        lightPosition.z = cos(time * lightMotionSpeed) * lightMotionRadius;
+
+        glm::vec3 lightPosInViewSpace = glm::vec3(view_matrix * glm::vec4(lightPosition, 1.0));
+
         boids_program.program.use();
+        glUniform3fv(boids_program.u_light_pos_vs, 1, glm::value_ptr(lightPosInViewSpace));
+        glUniform3fv(boids_program.u_light_intensity, 1, glm::value_ptr(lightIntensity));
 
         for (int i = 0; i < boids.size(); i++)
         {
@@ -171,7 +209,7 @@ int main()
 
             glUniform1i(boids_program.u_texture, 0);
             glBindTexture(GL_TEXTURE_2D, texture_object_moon);
-            glUniform1i(boids_program.use_color, 0);
+            glUniform1i(boids_program.u_use_color, 0);
             glUniformMatrix4fv(boids_program.u_MVP_matrix, 1, GL_FALSE, glm::value_ptr(MVP_matrix));
             glUniformMatrix4fv(boids_program.u_MV_matrix, 1, GL_FALSE, glm::value_ptr(MV_matrix));
             glUniformMatrix3fv(boids_program.u_normal_matrix, 1, GL_FALSE, glm::value_ptr(normal_matrix));
