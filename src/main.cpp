@@ -3,10 +3,9 @@
 #include <vector>
 #include "boid.hpp"
 #include "game_object.hpp"
-#include "glimac/FreeflyCamera.hpp"
 #include "glimac/common.hpp"
-#include "glimac/default_shader.hpp"
 #include "glimac/sphere_vertices.hpp"
+#include "glimac/trackball_camera.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/fwd.hpp"
 #include "glm/glm.hpp"
@@ -41,6 +40,33 @@ struct BoidsProgram {
     }
 };
 
+void handle_camera_input(p6::Context& ctx, TrackballCamera& camera, float& last_x, float& last_y)
+{
+    ctx.mouse_dragged = [&](p6::MouseDrag drag) {
+        float deltaX = drag.position.x - last_x;
+        float deltaY = drag.position.y - last_y;
+
+        if (last_x != 0 && last_y != 0)
+        {
+            camera.rotate_left(-deltaX * 50.f);
+            camera.rotate_up(deltaY * 50.f);
+        }
+
+        last_x = drag.position.x;
+        last_y = drag.position.y;
+    };
+
+    if (!ctx.mouse_button_is_pressed(p6::Button::Left))
+    {
+        last_x = 0;
+        last_y = 0;
+    }
+
+    ctx.mouse_scrolled = [&](p6::MouseScroll scroll) {
+        camera.move_front(-scroll.dy);
+    };
+}
+
 void renderGameObject(GameObject& object, const glm::mat4& view_matrix, const glm::mat4& proj_matrix, BoidsProgram& program)
 {
     glm::mat4 model_matrix  = object.get_model_matrix();
@@ -74,7 +100,7 @@ int main()
     ctx.maximize_window();
     glEnable(GL_DEPTH_TEST);
 
-    FreeflyCamera     camera;
+    TrackballCamera   camera;
     Coeffs            coeffs;
     std::vector<Boid> boids(20);
     BoidsProgram      boids_program{};
@@ -110,6 +136,9 @@ int main()
     std::vector<glm::vec3> rotation_axes(boids.size());
     std::generate(rotation_axes.begin(), rotation_axes.end(), []() { return glm::sphericalRand(1.0f); });
 
+    float last_x = 0;
+    float last_y = 0;
+
     ctx.update = [&]() {
         for (auto& b : boids)
         {
@@ -124,25 +153,9 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        ctx.mouse_dragged = [&](p6::MouseDrag drag) {
-            camera.rotateLeft(-drag.delta.x * 20.f);
-            camera.rotateUp(-drag.delta.y * 20.f);
-        };
+        handle_camera_input(ctx, camera, last_x, last_y);
 
-        ctx.mouse_scrolled = [&](p6::MouseScroll scroll) {
-            camera.moveFront(scroll.dy * 0.1);
-        };
-
-        if (ctx.key_is_pressed(GLFW_KEY_W))
-            camera.moveFront(0.1);
-        if (ctx.key_is_pressed(GLFW_KEY_S))
-            camera.moveFront(-0.1);
-        if (ctx.key_is_pressed(GLFW_KEY_D))
-            camera.moveLeft(-0.1);
-        if (ctx.key_is_pressed(GLFW_KEY_A))
-            camera.moveLeft(0.1);
-
-        glm::mat4 view_matrix = camera.getViewMatrix();
+        glm::mat4 view_matrix = camera.get_view_matrix();
         glm::mat4 proj_matrix = glm::perspective(glm::radians(70.f), ctx.aspect_ratio(), 0.1f, 100.f);
 
         boids_program.program.use();

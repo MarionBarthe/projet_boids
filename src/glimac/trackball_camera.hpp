@@ -15,22 +15,22 @@ public:
     TrackballCamera()
         : m_Distance(5.0f), m_AngleX(0.0f), m_AngleY(0.0f) {}
 
-    void moveFront(float delta)
+    void move_front(float delta)
     {
         m_Distance += delta;
     }
 
-    void rotateLeft(float degrees)
+    void rotate_left(float degrees)
     {
         m_AngleY += glm::radians(degrees);
     }
 
-    void rotateUp(float degrees)
+    void rotate_up(float degrees)
     {
         m_AngleX += glm::radians(degrees);
     }
 
-    glm::mat4 getViewMatrix() const
+    glm::mat4 get_view_matrix() const
     {
         glm::mat4 viewMatrix(1.0f);
 
