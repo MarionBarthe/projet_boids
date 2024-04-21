@@ -20,6 +20,10 @@ public:
     void set_rotation(const glm::vec3& new_rotation);
     void set_scale(float new_scale);
 
+    void move_x(float offset);
+    void move_y(float offset);
+    void move_z(float offset);
+
     void set_factors(const glm::vec3& new_diffuse, const glm::vec3& new_specular, float new_shininess);
 
     glm::vec3 get_base_color() const { return base_color; }

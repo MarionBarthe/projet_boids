@@ -96,3 +96,21 @@ void GameObject::update_model_matrix()
     model_matrix = glm::rotate(model_matrix, glm::radians(rotation.z), glm::vec3(0, 0, 1));
     model_matrix = glm::scale(model_matrix, glm::vec3(scale));
 }
+
+void GameObject::move_x(float offset)
+{
+    position.x += offset;
+    update_model_matrix();
+}
+
+void GameObject::move_y(float offset)
+{
+    position.y += offset;
+    update_model_matrix();
+}
+
+void GameObject::move_z(float offset)
+{
+    position.z += offset;
+    update_model_matrix();
+}

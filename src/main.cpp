@@ -83,6 +83,39 @@ void handle_camera_input(p6::Context& ctx, TrackballCamera& camera, float& last_
     };
 }
 
+void move_surveyor(GameObject& surveyor, p6::Context& ctx)
+{
+    float speed = 0.1f;
+    if (ctx.key_is_pressed(GLFW_KEY_W))
+    {
+        surveyor.move_z(-speed);
+        surveyor.set_rotation({0, 90, 0});
+    }
+    if (ctx.key_is_pressed(GLFW_KEY_S))
+    {
+        surveyor.move_z(speed);
+        surveyor.set_rotation({0, -90, 0});
+    }
+    if (ctx.key_is_pressed(GLFW_KEY_A))
+    {
+        surveyor.move_x(-speed);
+        surveyor.set_rotation({0, 180, 0});
+    }
+    if (ctx.key_is_pressed(GLFW_KEY_D))
+    {
+        surveyor.move_x(speed);
+        surveyor.set_rotation({0, 0, 0});
+    }
+    if (ctx.key_is_pressed(GLFW_KEY_UP))
+    {
+        surveyor.move_y(speed);
+    }
+    if (ctx.key_is_pressed(GLFW_KEY_DOWN))
+    {
+        surveyor.move_y(-speed);
+    }
+}
+
 void renderGameObject(GameObject& object, const glm::mat4& view_matrix, const glm::mat4& proj_matrix, BoidsProgram& program)
 {
     glm::mat4 model_matrix  = object.get_model_matrix();
@@ -182,6 +215,7 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        move_surveyor(astronaut_object, ctx);
         camera.set_center(astronaut_object.get_position());
         handle_camera_input(ctx, camera, last_x, last_y);
 
