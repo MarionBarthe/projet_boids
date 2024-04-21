@@ -21,6 +21,8 @@ public:
     void      set_scale(float scale);
     glm::mat4 get_model_matrix() const { return model_matrix; }
     glm::vec3 get_base_color() const { return base_color; }
+    GLuint    get_texture() const { return texture_object; }
+    bool      get_use_texture() const { return use_texture; }
 
     // Draw the object with shader support
     void draw() const;
