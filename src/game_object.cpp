@@ -3,17 +3,19 @@
 #include "glm/gtc/type_ptr.hpp"
 
 GameObject::GameObject(const std::string& model_path, const std::string& texture_path)
-    : use_texture(true), model_matrix(1.0f)
+    : use_texture(true), position(glm::vec3(0.0f)), rotation(glm::vec3(0.0f)), scale(1.0f)
 {
     load_model(model_path);
     load_texture(texture_path);
+    update_model_matrix();
     set_factors({1.0f, 1.0f, 1.0f}, {0.5f, 0.5f, 0.5f}, 64.0f);
 }
 
 GameObject::GameObject(const std::string& model_path, const glm::vec3& color)
-    : use_texture(false), model_matrix(1.0f), base_color(color)
+    : use_texture(false), base_color(color), position(glm::vec3(0.0f)), rotation(glm::vec3(0.0f)), scale(1.0f)
 {
     load_model(model_path);
+    update_model_matrix();
     set_factors({1.0f, 1.0f, 1.0f}, {0.5f, 0.5f, 0.5f}, 64.0f);
 }
 
@@ -22,28 +24,29 @@ GameObject::~GameObject()
     // No resources to explicitly free since VAO and VBO objects are managed automatically
 }
 
-void GameObject::set_position(const glm::vec3& position)
+void GameObject::set_position(const glm::vec3& new_position)
 {
-    model_matrix = glm::translate(glm::mat4(1.0f), position);
+    position = new_position;
+    update_model_matrix();
 }
 
-void GameObject::set_rotation(const glm::vec3& rotation)
+void GameObject::set_rotation(const glm::vec3& new_rotation)
 {
-    model_matrix = glm::rotate(model_matrix, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-    model_matrix = glm::rotate(model_matrix, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-    model_matrix = glm::rotate(model_matrix, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+    rotation = new_rotation;
+    update_model_matrix();
 }
 
-void GameObject::set_scale(float scale)
+void GameObject::set_scale(float new_scale)
 {
-    model_matrix = glm::scale(model_matrix, glm::vec3(scale));
+    scale = new_scale;
+    update_model_matrix();
 }
 
-void GameObject::set_factors(const glm::vec3& newDiffuse, const glm::vec3& newSpecular, float newShininess)
+void GameObject::set_factors(const glm::vec3& new_diffuse, const glm::vec3& new_specular, float new_shininess)
 {
-    diffuse_factor   = newDiffuse;
-    specular_factor  = newSpecular;
-    shininess_factor = newShininess;
+    diffuse_factor   = new_diffuse;
+    specular_factor  = new_specular;
+    shininess_factor = new_shininess;
 }
 
 void GameObject::draw() const
@@ -83,4 +86,13 @@ void GameObject::load_texture(const std::string& texture_path)
     std::cout << "Loading texture from: " << texture_path << std::endl;
 
     texture_object = TextureManager::load_texture(texture_path);
+}
+
+void GameObject::update_model_matrix()
+{
+    model_matrix = glm::translate(glm::mat4(1.0f), position);
+    model_matrix = glm::rotate(model_matrix, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+    model_matrix = glm::rotate(model_matrix, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+    model_matrix = glm::rotate(model_matrix, glm::radians(rotation.z), glm::vec3(0, 0, 1));
+    model_matrix = glm::scale(model_matrix, glm::vec3(scale));
 }
