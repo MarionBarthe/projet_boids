@@ -7,37 +7,43 @@
 
 class TrackballCamera {
 private:
-    float m_Distance;
-    float m_AngleX;
-    float m_AngleY;
+    float     m_distance;
+    float     m_angle_x;
+    float     m_angle_y;
+    glm::vec3 m_center;
 
 public:
     TrackballCamera()
-        : m_Distance(5.0f), m_AngleX(0.0f), m_AngleY(0.0f) {}
+        : m_distance(5.0f), m_angle_x(0.0f), m_angle_y(0.0f) {}
 
     void move_front(float delta)
     {
-        m_Distance += delta;
+        m_distance += delta;
     }
 
     void rotate_left(float degrees)
     {
-        m_AngleY += glm::radians(degrees);
+        m_angle_y += glm::radians(degrees);
     }
 
     void rotate_up(float degrees)
     {
-        m_AngleX += glm::radians(degrees);
+        m_angle_x -= glm::radians(degrees);
+    }
+
+    void set_center(const glm::vec3& center)
+    {
+        m_center = center;
     }
 
     glm::mat4 get_view_matrix() const
     {
-        glm::mat4 viewMatrix(1.0f);
-
-        viewMatrix = glm::rotate(viewMatrix, m_AngleX, glm::vec3(1.0f, 0.0f, 0.0f));
-        viewMatrix = glm::rotate(viewMatrix, m_AngleY, glm::vec3(0.0f, 1.0f, 0.0f));
-        viewMatrix = glm::translate(viewMatrix, glm::vec3(0.0f, 0.0f, -m_Distance));
-        return viewMatrix;
+        glm::mat4 view_matrix(1.0f);
+        view_matrix = glm::translate(view_matrix, glm::vec3(0.0f, 0.0f, -m_distance));
+        view_matrix = glm::rotate(view_matrix, m_angle_y, glm::vec3(0.0f, 1.0f, 0.0f));
+        view_matrix = glm::rotate(view_matrix, m_angle_x, glm::vec3(1.0f, 0.0f, 0.0f));
+        view_matrix = glm::translate(view_matrix, -m_center);
+        return view_matrix;
     }
 };
 

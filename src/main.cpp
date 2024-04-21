@@ -136,7 +136,7 @@ int main()
     star_object.set_scale(0.01f);
 
     GameObject space_object("assets/models/space.obj", "assets/textures/space_texture.jpg");
-    space_object.set_scale(0.05f);
+    space_object.set_scale(0.1f);
     space_object.set_factors({0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, 120.0f);
 
     GLuint texture_object_moon = TextureManager::load_texture("assets/textures/MoonMap.jpg");
@@ -164,7 +164,7 @@ int main()
 
     // Définition de la position initiale et du mouvement de la lumière
     glm::vec3 lightPosition(0.0f, 0.0f, 0.0f);                 // Position initiale de la lumière
-    float     lightMotionRadius = 10.0f;                       // Rayon du mouvement de la lumière
+    float     lightMotionRadius = 15.0f;                       // Rayon du mouvement de la lumière
     float     lightMotionSpeed  = 0.5f;                        // Vitesse du mouvement de la lumière
     glm::vec3 lightIntensity    = glm::vec3(2.0f, 2.0f, 2.0f); // Intensité de lumière blanche
 
@@ -182,6 +182,7 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        camera.set_center(astronaut_object.get_position());
         handle_camera_input(ctx, camera, last_x, last_y);
 
         glm::mat4 view_matrix = camera.get_view_matrix();
