@@ -7,10 +7,7 @@
 class ModelLoader {
 public:
     struct Model {
-        std::vector<float>        vertices;
-        std::vector<float>        normals;
-        std::vector<float>        texcoords;
-        std::vector<unsigned int> indices;
+        std::vector<float> combined_data;
     };
 
     static Model load_model(const std::string& file_path);

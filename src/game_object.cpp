@@ -51,20 +51,21 @@ void GameObject::load_model(const std::string& model_path)
 
     ModelLoader::Model model = ModelLoader::load_model(model_path);
 
-    vao.bind();
     vbo_vertices.bind();
+    vbo_vertices.fill(model.combined_data.data(), model.combined_data.size() * sizeof(float), GL_STATIC_DRAW);
 
-    vbo_vertices.fill(model.vertices.data(), model.vertices.size() * sizeof(float), GL_STATIC_DRAW);
+    vao.bind();
+    int stride = 8 * sizeof(float);
 
-    vao.specify_attribute(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);                   // Position attribute
-    vao.specify_attribute(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)(3 * sizeof(float))); // Normal attribute
-    vao.specify_attribute(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)(6 * sizeof(float))); // Texture coordinate attribute
-
-    vbo_vertices.unbind();
+    vao.specify_attribute(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);                   // Position attribute
+    vao.specify_attribute(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float))); // Normal attribute
+    vao.specify_attribute(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)(6 * sizeof(float))); // Texture coordinate attribute
     vao.unbind();
 
+    vbo_vertices.unbind();
+
     // Store the data size for use in glDrawArrays
-    data_size = model.vertices.size() / 3;
+    data_size = model.combined_data.size() / 8;
 }
 
 void GameObject::load_texture(const std::string& texture_path)

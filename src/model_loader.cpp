@@ -54,33 +54,41 @@ ModelLoader::Model ModelLoader::process_model(const tinyobj::attrib_t& attrib, c
                 const float             vx  = attrib.vertices[3 * idx.vertex_index + 0];
                 const float             vy  = attrib.vertices[3 * idx.vertex_index + 1];
                 const float             vz  = attrib.vertices[3 * idx.vertex_index + 2];
-                model.vertices.push_back(vx);
-                model.vertices.push_back(vy);
-                model.vertices.push_back(vz);
 
-                // Check if `normal_index` is zero or positive. A negative index indicates no normal data.
+                // Vertex positions
+                model.combined_data.push_back(vx);
+                model.combined_data.push_back(vy);
+                model.combined_data.push_back(vz);
+
+                // Vertex normals
                 if (idx.normal_index >= 0)
                 {
                     const float nx = attrib.normals[3 * idx.normal_index + 0];
                     const float ny = attrib.normals[3 * idx.normal_index + 1];
                     const float nz = attrib.normals[3 * idx.normal_index + 2];
-                    model.normals.push_back(nx);
-                    model.normals.push_back(ny);
-                    model.normals.push_back(nz);
+                    model.combined_data.push_back(nx);
+                    model.combined_data.push_back(ny);
+                    model.combined_data.push_back(nz);
+                }
+                else
+                {
+                    model.combined_data.insert(model.combined_data.end(), {0.0f, 0.0f, 0.0f});
                 }
 
-                // Check if `texcoord_index` is zero or positive. A negative index indicates no texcoord data.
+                // Vertex texcoords
                 if (idx.texcoord_index >= 0)
                 {
                     const float tx = attrib.texcoords[2 * idx.texcoord_index + 0];
                     const float ty = attrib.texcoords[2 * idx.texcoord_index + 1];
-                    model.texcoords.push_back(tx);
-                    model.texcoords.push_back(ty);
+                    model.combined_data.push_back(tx);
+                    model.combined_data.push_back(ty);
+                }
+                else
+                {
+                    model.combined_data.insert(model.combined_data.end(), {0.0f, 0.0f});
                 }
             }
             index_offset += fv;
-
-            // Per-face material processing could be added here
         }
     }
 

@@ -60,12 +60,13 @@ int main()
     BoidsProgram boids_program{};
 
     // Initialize the "star" GameObject with the loaded model and a color
-    GameObject star_object("assets/models/astronout.obj", glm::vec3(0.0f, 1.0f, 1.0f)); // Now initializing with a color
+    GameObject star_object("assets/models/astronaut.obj", "assets/textures/astronaut_texture.jpg"); // Now initializing with a color
     star_object.set_position(glm::vec3(0.f, 0.f, -5.f));
     star_object.set_scale(0.25f);
 
     // Load texture for the moon rendering
     GLuint texture_object_moon = TextureManager::load_texture("assets/textures/MoonMap.jpg");
+    GLuint texture_object_star = TextureManager::load_texture("assets/textures/astronaut_texture.jpg");
 
     // Create a VBO for vertices using sphere data
     VBO vbo_vertices;
@@ -171,10 +172,11 @@ int main()
         boids_program.program.use(); // Assurez-vous d'utiliser le programme de shader
 
         glUniform1i(boids_program.u_texture, 0); // Définir l'uniforme de texture
-        glUniform1i(boids_program.use_color, 1); // Signal pour utiliser la couleur au lieu de la texture
+        glUniform1i(boids_program.use_color, 0); // Signal pour utiliser la couleur au lieu de la texture
         glUniformMatrix3fv(boids_program.u_normal_matrix, 1, GL_FALSE, glm::value_ptr(normal_matrix_star));
-        glUniform3fv(boids_program.u_color, 1, glm::value_ptr(star_object.get_base_color()));
+        // glUniform3fv(boids_program.u_color, 1, glm::value_ptr(star_object.get_base_color()));
         glUniformMatrix4fv(boids_program.u_MVP_matrix, 1, GL_FALSE, glm::value_ptr(MVP_star));
+        glBindTexture(GL_TEXTURE_2D, texture_object_star);
         glUniformMatrix4fv(boids_program.u_MV_matrix, 1, GL_FALSE, glm::value_ptr(MV_matrix_star));
 
         star_object.draw(); // Dessiner l'étoile
