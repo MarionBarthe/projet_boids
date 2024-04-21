@@ -33,8 +33,10 @@ struct BoidsProgram {
     GLint u_ks;
     GLint u_shininess;
 
-    GLint u_light_pos_vs;
-    GLint u_light_intensity;
+    GLint u_light_pos_vs_0;
+    GLint u_light_intensity_0;
+    GLint u_light_pos_vs_1;
+    GLint u_light_intensity_1;
 
     BoidsProgram()
         : program{p6::load_shader(
@@ -50,10 +52,18 @@ struct BoidsProgram {
         , u_kd(glGetUniformLocation(program.id(), "u_kd"))
         , u_ks(glGetUniformLocation(program.id(), "u_ks"))
         , u_shininess(glGetUniformLocation(program.id(), "u_shininess"))
-        , u_light_pos_vs(glGetUniformLocation(program.id(), "u_light_pos_vs"))
-        , u_light_intensity(glGetUniformLocation(program.id(), "u_light_intensity"))
+        , u_light_pos_vs_0(glGetUniformLocation(program.id(), "u_lights[0].position"))
+        , u_light_intensity_0(glGetUniformLocation(program.id(), "u_lights[0].intensity"))
+        , u_light_pos_vs_1(glGetUniformLocation(program.id(), "u_lights[1].position"))
+        , u_light_intensity_1(glGetUniformLocation(program.id(), "u_lights[1].intensity"))
+
     {
     }
+};
+
+struct Light {
+    glm::vec3 position;  // Light position in view space
+    glm::vec3 intensity; // Light intensity
 };
 
 void handle_camera_input(p6::Context& ctx, TrackballCamera& camera, float& last_x, float& last_y)
@@ -64,8 +74,8 @@ void handle_camera_input(p6::Context& ctx, TrackballCamera& camera, float& last_
 
         if (last_x != 0 && last_y != 0)
         {
-            camera.rotate_left(-deltaX * 50.f);
-            camera.rotate_up(deltaY * 50.f);
+            camera.rotate_left(-deltaX * 25.f);
+            camera.rotate_up(deltaY * 25.f);
         }
 
         last_x = drag.position.x;
@@ -76,6 +86,11 @@ void handle_camera_input(p6::Context& ctx, TrackballCamera& camera, float& last_
     {
         last_x = 0;
         last_y = 0;
+    }
+
+    if (ctx.mouse_button_is_pressed(p6::Button::Right))
+    {
+        camera.reset_camera();
     }
 
     ctx.mouse_scrolled = [&](p6::MouseScroll scroll) {
@@ -116,11 +131,11 @@ void move_surveyor(GameObject& surveyor, p6::Context& ctx)
     }
 }
 
-void renderGameObject(GameObject& object, const glm::mat4& view_matrix, const glm::mat4& proj_matrix, BoidsProgram& program)
+void render_game_object(GameObject& object, const glm::mat4& view_matrix, const glm::mat4& proj_matrix, BoidsProgram& program)
 {
     glm::mat4 model_matrix  = object.get_model_matrix();
     glm::mat4 MV_matrix     = view_matrix * model_matrix;
-    glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(view_matrix * MV_matrix)));
+    glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(view_matrix * model_matrix)));
     glm::mat4 MVP_matrix    = proj_matrix * view_matrix * model_matrix;
 
     program.program.use();
@@ -158,6 +173,7 @@ int main()
     Coeffs            coeffs;
     std::vector<Boid> boids(20);
     BoidsProgram      boids_program{};
+    Light             lights[2];
 
     GameObject astronaut_object("assets/models/astronaut.obj", "assets/textures/astronaut_texture.jpg");
     astronaut_object.set_position(glm::vec3(0.f, 0.f, -5.f));
@@ -170,7 +186,7 @@ int main()
 
     GameObject space_object("assets/models/space.obj", "assets/textures/space_texture.jpg");
     space_object.set_scale(0.1f);
-    space_object.set_factors({0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, 120.0f);
+    space_object.set_factors({0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, 50.0f);
 
     GLuint texture_object_moon = TextureManager::load_texture("assets/textures/MoonMap.jpg");
 
@@ -195,11 +211,10 @@ int main()
     float last_x = 0;
     float last_y = 0;
 
-    // Définition de la position initiale et du mouvement de la lumière
-    glm::vec3 lightPosition(0.0f, 0.0f, 0.0f);                 // Position initiale de la lumière
-    float     lightMotionRadius = 15.0f;                       // Rayon du mouvement de la lumière
-    float     lightMotionSpeed  = 0.5f;                        // Vitesse du mouvement de la lumière
-    glm::vec3 lightIntensity    = glm::vec3(2.0f, 2.0f, 2.0f); // Intensité de lumière blanche
+    glm::vec3 lightPosition(0.0f, 0.0f, 0.0f);
+    float     lightMotionRadius = 10.0f;
+    float     lightMotionSpeed  = 0.5f;
+    lights[0].intensity         = glm::vec3(1.0f, 1.0f, 1.0f);
 
     ctx.update = [&]() {
         for (auto& b : boids)
@@ -227,11 +242,19 @@ int main()
         lightPosition.x = sin(time * lightMotionSpeed) * lightMotionRadius;
         lightPosition.z = cos(time * lightMotionSpeed) * lightMotionRadius;
 
-        glm::vec3 lightPosInViewSpace = glm::vec3(view_matrix * glm::vec4(lightPosition, 1.0));
+        star_object.set_position(lightPosition);
+        lights[0].position = glm::vec3(view_matrix * glm::vec4(lightPosition, 1.0));
+
+        astronaut_object.move_y(-1);
+        lights[1].position  = glm::vec3(view_matrix * glm::vec4(astronaut_object.get_position(), 1.0));
+        lights[1].intensity = glm::vec3(1.0f, 1.0f, 1.0f);
+        astronaut_object.move_y(1);
 
         boids_program.program.use();
-        glUniform3fv(boids_program.u_light_pos_vs, 1, glm::value_ptr(lightPosInViewSpace));
-        glUniform3fv(boids_program.u_light_intensity, 1, glm::value_ptr(lightIntensity));
+        glUniform3fv(boids_program.u_light_pos_vs_0, 1, glm::value_ptr(lights[0].position));
+        glUniform3fv(boids_program.u_light_intensity_0, 1, glm::value_ptr(lights[0].intensity));
+        glUniform3fv(boids_program.u_light_pos_vs_1, 1, glm::value_ptr(lights[1].position));
+        glUniform3fv(boids_program.u_light_intensity_1, 1, glm::value_ptr(lights[1].intensity));
 
         for (int i = 0; i < boids.size(); i++)
         {
@@ -254,9 +277,9 @@ int main()
             vao.unbind();
         }
 
-        renderGameObject(astronaut_object, view_matrix, proj_matrix, boids_program);
-        renderGameObject(space_object, view_matrix, proj_matrix, boids_program);
-        renderGameObject(star_object, view_matrix, proj_matrix, boids_program);
+        render_game_object(astronaut_object, view_matrix, proj_matrix, boids_program);
+        render_game_object(space_object, view_matrix, proj_matrix, boids_program);
+        render_game_object(star_object, view_matrix, proj_matrix, boids_program);
     };
 
     ctx.start();

@@ -36,6 +36,12 @@ public:
         m_center = center;
     }
 
+    void reset_camera()
+    {
+        m_angle_x = 0;
+        m_angle_y = 0;
+    }
+
     glm::mat4 get_view_matrix() const
     {
         glm::mat4 view_matrix(1.0f);
