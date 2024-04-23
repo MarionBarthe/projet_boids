@@ -50,13 +50,18 @@ void main() {
     vec3 normal = normalize(v_normal_vs);  // Normalize the normal vector
     vec3 frag_color;
 
-    if(u_use_color) {
-        frag_color = u_color;  // Use the uniform color if specified
+    if(u_shininess == 0) {
+        f_frag_color = vec4(u_color, 1.0);
     } else {
-        vec4 texture_color = texture(u_texture, v_tex_coords);
-        frag_color = texture_color.rgb;  // Use the color from the texture
+        if(u_use_color) {
+            frag_color = u_color;  // Use the uniform color if specified
+        } else {
+            vec4 texture_color = texture(u_texture, v_tex_coords);
+            frag_color = texture_color.rgb;  // Use the color from the texture
+        }
+
+        vec3 lighting = blinn_phong_lighting(0, normal, v_position_vs) + blinn_phong_lighting(1, normal, v_position_vs); // Calculate lighting
+        f_frag_color = vec4(frag_color * lighting, 1.0);  // Apply lighting to the fragment color
     }
 
-    vec3 lighting = blinn_phong_lighting(0, normal, v_position_vs) + blinn_phong_lighting(1, normal, v_position_vs); // Calculate lighting
-    f_frag_color = vec4(frag_color * lighting, 1.0);  // Apply lighting to the fragment color
 }

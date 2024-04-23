@@ -175,20 +175,28 @@ int main()
     BoidsProgram      boids_program{};
     Light             lights[2];
 
-    GameObject astronaut_object("assets/models/astronaut.obj", "assets/textures/astronaut_texture.jpg");
+    GameObject astronaut_object("assets/models/astronaut2.obj", "assets/textures/astronaut_texture.jpg");
     astronaut_object.set_position(glm::vec3(0.f, 0.f, -5.f));
-    astronaut_object.set_scale(0.25f);
+    astronaut_object.set_scale(glm::vec3(0.25f, 0.25f, 0.25f));
     astronaut_object.set_factors({1.f, 0.5f, 0.5f}, {1.f, 0.5f, 0.5f}, 100.0f);
+
+    GameObject astronaut_edge_object("assets/models/astronaut2.obj", glm::vec3(1.0f, 1.0f, 1.0f));
+    astronaut_edge_object.set_scale(glm::vec3(0.26f, 0.26f, 0.26f));
+    astronaut_edge_object.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
 
     GameObject star_object("assets/models/star.obj", glm::vec3(0.0f, 1.0f, 1.0f));
     star_object.set_position(glm::vec3(0.f, 0.f, -1.f));
-    star_object.set_scale(0.01f);
+    star_object.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
 
     GameObject star_object_2("assets/models/star.obj", glm::vec3(1.0f, 0.0f, 0.0f));
-    star_object_2.set_scale(0.01f);
+    star_object_2.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
+
+    GameObject star_edge_object("assets/models/star.obj", glm::vec3(1.0f, 1.0f, 1.0f));
+    star_edge_object.set_scale(glm::vec3(0.011f, 0.011f, 0.011f));
+    star_edge_object.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
 
     GameObject space_object("assets/models/space.obj", "assets/textures/space_texture.jpg");
-    space_object.set_scale(0.1f);
+    space_object.set_scale(glm::vec3(0.1f, 0.1f, 0.1f));
     space_object.set_factors({0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, 50.0f);
 
     GLuint texture_object_moon = TextureManager::load_texture("assets/textures/MoonMap.jpg");
@@ -217,7 +225,7 @@ int main()
     glm::vec3 lightPosition(0.0f, 0.0f, 0.0f);
     float     lightMotionRadius = 10.0f;
     float     lightMotionSpeed  = 0.5f;
-    lights[0].intensity         = glm::vec3(1.0f, 1.0f, 1.0f);
+    lights[0].intensity         = glm::vec3(2.0f, 2.0f, 2.0f);
 
     ctx.update = [&]() {
         for (auto& b : boids)
@@ -251,7 +259,7 @@ int main()
         astronaut_object.move_y(1.2f);
         star_object_2.set_position(astronaut_object.get_position());
         lights[1].position  = glm::vec3(view_matrix * glm::vec4(astronaut_object.get_position(), 1.0));
-        lights[1].intensity = glm::vec3(1.f, 0.8f, 0.8f);
+        lights[1].intensity = glm::vec3(2.f, 1.5f, 1.5f);
         astronaut_object.move_y(-1.2f);
 
         boids_program.program.use();
@@ -281,10 +289,28 @@ int main()
             vao.unbind();
         }
 
+        astronaut_edge_object.set_position(astronaut_object.get_position());
+
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+        astronaut_edge_object.set_position(astronaut_object.get_position());
+        render_game_object(astronaut_edge_object, view_matrix, proj_matrix, boids_program);
+
+        star_edge_object.set_position(star_object.get_position());
+        render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
+
+        star_edge_object.set_position(star_object_2.get_position());
+        render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
+
+        glCullFace(GL_BACK);
         render_game_object(astronaut_object, view_matrix, proj_matrix, boids_program);
-        render_game_object(space_object, view_matrix, proj_matrix, boids_program);
         render_game_object(star_object, view_matrix, proj_matrix, boids_program);
         render_game_object(star_object_2, view_matrix, proj_matrix, boids_program);
+        glDisable(GL_CULL_FACE);
+
+        render_game_object(space_object, view_matrix, proj_matrix, boids_program);
+        render_game_object(star_object, view_matrix, proj_matrix, boids_program);
+        render_game_object(space_object, view_matrix, proj_matrix, boids_program);
     };
 
     ctx.start();

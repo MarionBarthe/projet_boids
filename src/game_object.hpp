@@ -18,7 +18,7 @@ public:
 
     void set_position(const glm::vec3& new_position);
     void set_rotation(const glm::vec3& new_rotation);
-    void set_scale(float new_scale);
+    void set_scale(const glm::vec3& new_scale);
 
     void move_x(float offset);
     void move_y(float offset);
@@ -31,6 +31,8 @@ public:
     bool      get_use_texture() const { return use_texture; }
 
     glm::vec3 get_position() const { return position; }
+    glm::vec3 get_rotation() const { return rotation; }
+    glm::vec3 get_scale() const { return scale; }
     glm::mat4 get_model_matrix() const { return model_matrix; }
 
     glm::vec3 get_diffuse_factor() const { return diffuse_factor; }
@@ -50,7 +52,7 @@ private:
 
     glm::vec3 position;
     glm::vec3 rotation;
-    float     scale;
+    glm::vec3 scale;
     glm::mat4 model_matrix; // Transformation matrix of the object
 
     glm::vec3 diffuse_factor;   // Diffuse reflectivity

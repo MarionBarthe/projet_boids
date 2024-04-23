@@ -36,7 +36,7 @@ void GameObject::set_rotation(const glm::vec3& new_rotation)
     update_model_matrix();
 }
 
-void GameObject::set_scale(float new_scale)
+void GameObject::set_scale(const glm::vec3& new_scale)
 {
     scale = new_scale;
     update_model_matrix();
@@ -94,7 +94,7 @@ void GameObject::update_model_matrix()
     model_matrix = glm::rotate(model_matrix, glm::radians(rotation.x), glm::vec3(1, 0, 0));
     model_matrix = glm::rotate(model_matrix, glm::radians(rotation.y), glm::vec3(0, 1, 0));
     model_matrix = glm::rotate(model_matrix, glm::radians(rotation.z), glm::vec3(0, 0, 1));
-    model_matrix = glm::scale(model_matrix, glm::vec3(scale));
+    model_matrix = glm::scale(model_matrix, scale);
 }
 
 void GameObject::move_x(float offset)
