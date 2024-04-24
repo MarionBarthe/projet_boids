@@ -88,6 +88,11 @@ void GameObject::load_texture(const std::string& texture_path)
     texture_object = TextureManager::load_texture(texture_path);
 }
 
+void GameObject::change_texture(const std::string& texture_path)
+{
+    load_texture(texture_path);
+}
+
 void GameObject::update_model_matrix()
 {
     model_matrix = glm::translate(glm::mat4(1.0f), position);

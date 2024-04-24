@@ -191,28 +191,33 @@ void normal_distribution_polar(std::vector<double>& results, double average, dou
 // Simulate beta distribution with parameters alpha and beta, using inverse transform sampling
 double beta_distribution(double alpha, double beta)
 {
-    double u = generate_random(); // Random number between 0 and 1
+    const double u = generate_random(); // Random number between 0 and 1
 
-    // Inverse transform sampling
-    double cdf          = 0.0;     // Cumulative distribution function
-    double step         = 0.00001; // Step size for numerical integration
-    double x            = 0.0;
-    double beta_distrib = 0.0;
-    while (cdf < u)
+    double       cdf          = 0.0; // Cumulative distribution function
+    const double step         = 0.0001;
+    double       x            = 0.0;
+    double       beta_distrib = 0.0;
+
+    const double gamma_alpha      = std::tgamma(alpha);
+    const double gamma_beta       = std::tgamma(beta);
+    const double gamma_alpha_beta = std::tgamma(alpha + beta);
+
+    while (x <= 1.0)
     {
-        if (x < 0 || x > 1)
-        {
-            beta_distrib = 0; // Outside the range
-        }
-        else
-        {
-            // Calculation of the probability density function
-            beta_distrib = (std::pow(x, alpha - 1) * std::pow(1 - x, beta - 1));
-            beta_distrib = beta_distrib / (std::tgamma(alpha) * std::tgamma(beta) / std::tgamma(alpha + beta));
-        }
+        // Calculation of the probability density function
+        beta_distrib = (std::pow(x, alpha - 1) * std::pow(1 - x, beta - 1));
+        beta_distrib = beta_distrib / (gamma_alpha * gamma_beta / gamma_alpha_beta);
+
         cdf += beta_distrib * step;
+
+        if (cdf >= u)
+        {
+            return x;
+        }
+
         x += step;
     }
+
     return x;
 }
 

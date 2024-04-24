@@ -234,7 +234,7 @@ int main()
     srand(time(NULL));
 
     TrackballCamera   camera;
-    Coeffs            coeffs;
+    Boid_variables    coeffs;
     std::vector<Boid> boids(20);
     BoidsProgram      boids_program{};
     Light             lights[2];
@@ -252,12 +252,17 @@ int main()
     // Create Markov chain object
     MarkovChain astronaut_chain(astronaut_transition_matrix, astronaut_initial_state);
 
-    GameObject astronaut_object("assets/models/astronaut2.obj", "assets/textures/astronaut_texture.jpg");
+    GameObject astronaut_object("assets/models/astronaut.obj", "assets/textures/astronaut_texture.jpg");
+    if (bernoulli_distribution(0.1))
+    {
+        astronaut_object.change_texture("assets/textures/astronaut_shiny_texture.jpg");
+    }
+
     astronaut_object.set_position(glm::vec3(0.f, 0.f, -5.f));
     astronaut_object.set_scale(glm::vec3(0.25f, 0.25f, 0.25f));
     astronaut_object.set_factors({1.f, 0.5f, 0.5f}, {1.f, 0.5f, 0.5f}, 100.0f);
 
-    GameObject astronaut_edge_object("assets/models/astronaut2.obj", glm::vec3(.0f, .0f, .0f));
+    GameObject astronaut_edge_object("assets/models/astronaut.obj", glm::vec3(.0f, .0f, .0f));
     astronaut_edge_object.set_scale(glm::vec3(0.26f, 0.26f, 0.26f));
     astronaut_edge_object.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
 
@@ -291,7 +296,7 @@ int main()
     std::cout << "" << number_of_planets << std::endl;
     std::vector<glm::vec4> planet_positions_and_textures(number_of_planets);
 
-    float scale_cube = 200 * 0.1;
+    float scale_cube = 180 * 0.1;
 
     for (int i = 0; i < number_of_planets; i++)
     {

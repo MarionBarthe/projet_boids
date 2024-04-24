@@ -40,6 +40,8 @@ public:
     glm::vec3 get_specular_factor() const { return specular_factor; }
     float     get_shininess_factor() const { return shininess_factor; }
 
+    void change_texture(const std::string& texture_path);
+
     void interpolate_material_factors(const glm::vec3& target_diffuse, const glm::vec3& target_specular, float target_shininess, float blend_factor);
 
     void draw() const;
