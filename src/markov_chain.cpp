@@ -1,16 +1,5 @@
 #include "markov_chain.hpp"
 
-// Function to print the content of a container
-template<typename T>
-void print_container(const T& container)
-{
-    for (const auto& element : container)
-    {
-        std::cout << element << " ";
-    }
-    std::cout << std::endl;
-}
-
 MarkovChain::MarkovChain(const std::vector<std::vector<double>>& transition_matrix, const std::vector<double>& initial_state)
     : transition_matrix(transition_matrix), current_state(initial_state), state_counts(initial_state.size() + 1, 0.0)
 {
@@ -93,14 +82,14 @@ void MarkovChain::transition_probabilities()
     }
 
     // Log the next state probabilities
-    std::cout << "Next state probabilities:";
-    for (double prob : next_state)
-    {
-        std::cout << " " << prob;
-    }
-    std::cout << '\n';
+    // std::cout << "Next state probabilities:";
+    // for (double prob : next_state)
+    // {
+    //     std::cout << " " << prob;
+    // }
+    // std::cout << '\n';
 
-    current_state = next_state;
+    // current_state = next_state;
 }
 
 void MarkovChain::collapse_values()
@@ -122,7 +111,7 @@ void MarkovChain::collapse_values()
         if (rand_num <= prob_cumul[i]) // Comparing with the cumulative probability
         {
             active_state_index = i;
-            std::cout << "Active state index: " << active_state_index << '\n';
+            // std::cout << "Active state index: " << active_state_index << '\n';
             break;
         }
     }
@@ -132,7 +121,7 @@ void MarkovChain::collapse_values()
     {
         state_counts[active_state_index]++;
         state_counts[current_state.size()]++; // Update total count
-        std::cout << "State counts updated.\n";
+        // std::cout << "State counts updated.\n";
     }
     else
     {
@@ -144,9 +133,9 @@ void MarkovChain::collapse_values()
     current_state[active_state_index] = 1.0;
 
     // Log the current state
-    display_current_state();
-    std::cout << "_____________________" << '\n';
-    std::cout << '\n';
+    // display_current_state();
+    // std::cout << "_____________________" << '\n';
+    // std::cout << '\n';
 }
 
 void MarkovChain::transition_values()
@@ -165,6 +154,11 @@ const std::vector<int>& MarkovChain::get_state_counts() const
     return state_counts;
 }
 
+int MarkovChain::get_number_of_states() const
+{
+    return state_counts[state_counts.size() - 1];
+}
+
 void MarkovChain::display_current_state()
 {
     std::cout << "State |";
@@ -174,6 +168,37 @@ void MarkovChain::display_current_state()
         std::cout << current_state[i] << " |";
     }
     std::cout << "\n";
+}
+
+int MarkovChain::get_deterministic_current_state()
+{
+    int index = -1;
+    for (size_t i = 0; i < current_state.size(); ++i)
+    {
+        if (std::abs(current_state[i] - 1.0) < 1e-6)
+        {
+            if (index != -1)
+            {
+                std::cerr << "Error: Multiple states have a probability of 1." << std::endl;
+                return -1;
+            }
+            index = i;
+        }
+        else if (current_state[i] > 1e-6)
+        {
+            if (index != -1)
+            {
+                std::cerr << "Error: Mixed deterministic and probabilistic state." << std::endl;
+                return -1;
+            }
+        }
+    }
+
+    if (index == -1)
+    {
+        std::cerr << "Error: No deterministic state found. Current state is probabilistic." << std::endl;
+    }
+    return index;
 }
 
 void MarkovChain::display_state_counts()

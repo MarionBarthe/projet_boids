@@ -27,9 +27,24 @@ public:
 
     const std::vector<int>& get_state_counts() const;
 
+    int get_number_of_states() const;
+
     void display_current_state();
 
     void display_state_counts();
 
+    int get_deterministic_current_state();
+
     std::vector<double> calculate_stationary_distribution();
 };
+
+// Function to print the content of a container
+template<typename T>
+void print_container(const T& container)
+{
+    for (const auto& element : container)
+    {
+        std::cout << element << " ";
+    }
+    std::cout << std::endl;
+}

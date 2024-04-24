@@ -122,3 +122,10 @@ void GameObject::move(const glm::vec3 offset)
     position.z += offset.z;
     update_model_matrix();
 }
+
+void GameObject::interpolate_material_factors(const glm::vec3& target_diffuse, const glm::vec3& target_specular, float target_shininess, float blend_factor)
+{
+    diffuse_factor   = glm::mix(diffuse_factor, target_diffuse, blend_factor);
+    specular_factor  = glm::mix(specular_factor, target_specular, blend_factor);
+    shininess_factor = glm::mix(shininess_factor, target_shininess, blend_factor);
+}

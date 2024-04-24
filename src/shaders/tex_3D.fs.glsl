@@ -34,8 +34,8 @@ vec3 blinn_phong_lighting(int light_index, vec3 normal, vec3 frag_pos) {
 
     // Very low attenuation coefficients
     float constant = 1.0;    // Constant coefficient, does not change with distance
-    float linear = 0.05;   // Very low linear coefficient
-    float quadratic = 0.005; // Very low quadratic coefficient
+    float linear = 0.1;   // Very low linear coefficient
+    float quadratic = 0.01; // Very low quadratic coefficient
 
     float attenuation = 1.0 / ((constant + linear * distance) + (quadratic * (distance * distance)));
 

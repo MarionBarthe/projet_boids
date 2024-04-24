@@ -41,7 +41,7 @@ struct BoidsProgram {
     GLint u_light_intensity_1;
 
     double next_event_time = 0.0;
-    double lambda          = 1 / 20;
+    double lambda          = 1.0 / 5; // Every 5 seconds
 
     BoidsProgram()
         : program{p6::load_shader(
@@ -71,24 +71,28 @@ struct Light {
     glm::vec3 intensity; // Light intensity
 };
 
-struct TimeParameters {
-};
-
-void baba()
+void change_astronaut_temperament(MarkovChain& chain)
 {
-    std::cout << "baba() appelée" << std::endl;
+    // Perform transitions
+    chain.transition_values();
+    chain.display_state_counts();
+    // Display the current state and count of states every 10 transitions
+    if (chain.get_number_of_states() % 10 == 0)
+    {
+        print_container(chain.calculate_stationary_distribution());
+    }
 }
 
-void time_events(BoidsProgram& program, p6::Context& ctx)
+void time_events(BoidsProgram& program, MarkovChain& chain, p6::Context& ctx)
 {
     double current_time = ctx.time();
     if (current_time >= program.next_event_time)
     {
-        baba();
+        change_astronaut_temperament(chain);
 
         double delay            = exponential_distribution(program.lambda);
         program.next_event_time = current_time + delay;
-        std::cout << "Prochain événement dans: " << delay << " secondes." << std::endl;
+        std::cout << "Next event in " << delay << " seconds." << std::endl;
     }
 }
 
@@ -226,11 +230,27 @@ int main()
     ctx.maximize_window();
     glEnable(GL_DEPTH_TEST);
 
+    // Seed the random number generator
+    srand(time(NULL));
+
     TrackballCamera   camera;
     Coeffs            coeffs;
     std::vector<Boid> boids(20);
     BoidsProgram      boids_program{};
     Light             lights[2];
+
+    std::vector<std::vector<double>> astronaut_transition_matrix = {
+        {0.4, 0.1, 0.2, 0.1, 0.2}, // Happy to Happy, Sad, Angry, Scared, Relaxed
+        {0.2, 0.3, 0.1, 0.1, 0.3}, // Sad to Happy, Sad, Angry, Scared, Relaxed
+        {0.1, 0.2, 0.4, 0.1, 0.2}, // Angry to Happy, Sad, Angry, Scared, Relaxed
+        {0.1, 0.2, 0.1, 0.4, 0.2}, // Scared to Happy, Sad, Angry, Scared, Relaxed
+        {0.3, 0.1, 0.1, 0.1, 0.4}  // Relaxed to Happy, Sad, Angry, Scared, Relaxed
+    };
+
+    std::vector<double> astronaut_initial_state = {0.2, 0.1, 0.1, 0.1, 0.5};
+
+    // Create Markov chain object
+    MarkovChain astronaut_chain(astronaut_transition_matrix, astronaut_initial_state);
 
     GameObject astronaut_object("assets/models/astronaut2.obj", "assets/textures/astronaut_texture.jpg");
     astronaut_object.set_position(glm::vec3(0.f, 0.f, -5.f));
@@ -279,9 +299,9 @@ int main()
     float last_y = 0;
 
     glm::vec3 lightPosition(0.0f, 0.0f, 0.0f);
-    float     lightMotionRadius = 10.0f;
+    float     lightMotionRadius = 8.0f;
     float     lightMotionSpeed  = 0.5f;
-    lights[0].intensity         = glm::vec3(3.0f, 3.0f, 3.0f);
+    lights[0].intensity         = glm::vec3(2.0f, 2.0f, 2.0f);
 
     ctx.update = [&]() {
         for (auto& b : boids)
@@ -290,7 +310,7 @@ int main()
             b.update(&ctx, boids, coeffs);
         }
 
-        time_events(boids_program, ctx);
+        time_events(boids_program, astronaut_chain, ctx);
 
         ImGui::Begin("Boids command panel");
         ImGui::Text("Play with the parameters of the flock!");
@@ -316,9 +336,32 @@ int main()
 
         astronaut_object.move_y(1.1f);
         star_object_2.set_position(astronaut_object.get_position());
-        lights[1].position  = glm::vec3(view_matrix * glm::vec4(astronaut_object.get_position(), 1.0));
-        lights[1].intensity = glm::vec3(2.f, 1.5f, 1.5f);
+        lights[1].position = glm::vec3(view_matrix * glm::vec4(astronaut_object.get_position(), 1.0));
         astronaut_object.move_y(-1.1f);
+
+        switch (astronaut_chain.get_deterministic_current_state())
+        {
+        case 0:                                                                                                // Happy
+            astronaut_object.interpolate_material_factors({0.8f, 0.8f, 0.2f}, {1.f, 1.f, 1.f}, 100.0f, 0.05f); // Bright and shiny materials
+            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(3.f, 3.f, 1.5f), 0.1f);              // Bright and warm color
+            break;
+        case 1:                                                                                                  // Sad
+            astronaut_object.interpolate_material_factors({0.3f, 0.4f, 0.7f}, {0.5f, 0.5f, 0.8f}, 50.0f, 0.05f); // Darker and less reflective materials
+            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(0.5f, 0.5f, 2.f), 0.1f);               // Cooler, dimmer blue light
+            break;
+        case 2:                                                                                                 // Angry
+            astronaut_object.interpolate_material_factors({0.9f, 0.2f, 0.2f}, {1.f, 0.3f, 0.3f}, 80.0f, 0.05f); // Vibrant and less reflective materials
+            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(3.f, 0.3f, 0.3f), 0.1f);              // Intense red to enhance the feeling of anger
+            break;
+        case 3:                                                                                                  // Scared
+            astronaut_object.interpolate_material_factors({0.3f, 0.1f, 0.3f}, {0.4f, 0.2f, 0.7f}, 20.0f, 0.05f); // Darker violet materials
+            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(0.5f, 0.2f, 0.8f), 0.1f);              // Darker, purple light
+            break;
+        default:                                                                                               // Relaxed
+            astronaut_object.interpolate_material_factors({0.4f, 0.6f, 0.9f}, {0.8f, 1.f, 1.f}, 70.0f, 0.05f); // Calm and reflective materials
+            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(0.2f, 0.8f, 2.f), 0.1f);             // Soft blue-green
+            break;
+        }
 
         boids_program.program.use();
         glUniform3fv(boids_program.u_light_pos_vs_0, 1, glm::value_ptr(lights[0].position));
@@ -347,7 +390,6 @@ int main()
             vao.unbind();
         }
 
-        // space_wiggle(astronaut_object, ctx);
         astronaut_edge_object.set_position(astronaut_object.get_position());
         astronaut_edge_object.set_rotation(astronaut_object.get_rotation());
 
