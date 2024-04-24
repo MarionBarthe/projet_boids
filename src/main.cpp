@@ -387,6 +387,7 @@ int main()
         coeffs.draw_Gui();
         ImGui::End();
 
+        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         move_surveyor_with_wiggle(astronaut_object, ctx);
