@@ -103,7 +103,7 @@ int binomial_distribution(int n, double p)
 // Simulate binomial distribution by generating a number of success with n, number of trials, and p, probability of success, using the cumulative distribution function method
 int binomial_distribution_cdf(int n, double p)
 {
-    int    success_probability = 0;
+    double success_probability = 0;
     double random_threshold    = (double)rand() / RAND_MAX; // Random number between 0 and 1
 
     for (int i = 0; i <= n; i++)
@@ -194,8 +194,8 @@ double beta_distribution(double alpha, double beta)
     double u = generate_random(); // Random number between 0 and 1
 
     // Inverse transform sampling
-    double cdf          = 0.0;   // Cumulative distribution function
-    double step         = 0.001; // Step size for numerical integration
+    double cdf          = 0.0;     // Cumulative distribution function
+    double step         = 0.00001; // Step size for numerical integration
     double x            = 0.0;
     double beta_distrib = 0.0;
     while (cdf < u)

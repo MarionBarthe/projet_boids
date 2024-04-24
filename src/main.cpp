@@ -276,6 +276,30 @@ int main()
     space_object.set_scale(glm::vec3(0.1f, 0.1f, 0.1f));
     space_object.set_factors({0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, 50.0f);
 
+    GameObject jupiter_object("assets/models/planet.obj", "assets/textures/2k_jupiter.jpg");
+    GameObject mars_object("assets/models/planet.obj", "assets/textures/2k_mars.jpg");
+    GameObject neptune_object("assets/models/planet.obj", "assets/textures/2k_neptune.jpg");
+    GameObject planet_edge_object("assets/models/planet.obj", glm::vec3(.0f, .0f, .0f));
+    planet_edge_object.set_scale({1.01f, 1.1f, 1.01f});
+    planet_edge_object.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
+
+    int number_of_planets = binomial_distribution_cdf(12, 0.5);
+    std::cout << "" << number_of_planets << std::endl;
+    std::vector<glm::vec4> planet_positions_and_textures(number_of_planets);
+
+    float scale_cube = 200 * 0.1;
+
+    for (int i = 0; i < number_of_planets; i++)
+    {
+        double x = (beta_distribution(1.0, 1.0) - 0.5) * scale_cube; // edge
+        double y = (beta_distribution(1.0, 1.0) - 0.5) * scale_cube; // uniform
+        double z = (beta_distribution(1.0, 1.0) - 0.5) * scale_cube; // edge
+
+        int texture_index = discrete_uniform_distribution(0, 2);
+
+        planet_positions_and_textures[i] = glm::vec4(x, y, z, static_cast<float>(texture_index));
+    }
+
     GLuint texture_object_moon = TextureManager::load_texture("assets/textures/MoonMap.jpg");
 
     VBO vbo_vertices;
@@ -301,7 +325,7 @@ int main()
     glm::vec3 lightPosition(0.0f, 0.0f, 0.0f);
     float     lightMotionRadius = 8.0f;
     float     lightMotionSpeed  = 0.5f;
-    lights[0].intensity         = glm::vec3(2.0f, 2.0f, 2.0f);
+    lights[0].intensity         = glm::vec3(4.0f, 4.0f, 4.0f);
 
     ctx.update = [&]() {
         for (auto& b : boids)
@@ -404,10 +428,36 @@ int main()
         star_edge_object.set_position(star_object_2.get_position());
         render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
         render_game_object(space_object, view_matrix, proj_matrix, boids_program);
+
+        for (const auto& planet : planet_positions_and_textures)
+        {
+            planet_edge_object.set_position({planet[0], planet[1], planet[2]});
+            render_game_object(planet_edge_object, view_matrix, proj_matrix, boids_program);
+        }
+
         glCullFace(GL_BACK);
         render_game_object(astronaut_object, view_matrix, proj_matrix, boids_program);
         render_game_object(star_object, view_matrix, proj_matrix, boids_program);
         render_game_object(star_object_2, view_matrix, proj_matrix, boids_program);
+
+        for (const auto& planet : planet_positions_and_textures)
+        {
+            if (planet.w == 0)
+            {
+                jupiter_object.set_position({planet[0], planet[1], planet[2]});
+                render_game_object(jupiter_object, view_matrix, proj_matrix, boids_program);
+            }
+            else if (planet.w == 1)
+            {
+                mars_object.set_position({planet[0], planet[1], planet[2]});
+                render_game_object(mars_object, view_matrix, proj_matrix, boids_program);
+            }
+            else
+            {
+                neptune_object.set_position({planet[0], planet[1], planet[2]});
+                render_game_object(neptune_object, view_matrix, proj_matrix, boids_program);
+            }
+        }
 
         glDisable(GL_CULL_FACE);
 
