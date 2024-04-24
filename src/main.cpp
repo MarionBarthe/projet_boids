@@ -100,35 +100,66 @@ void handle_camera_input(p6::Context& ctx, TrackballCamera& camera, float& last_
 
 void move_surveyor(GameObject& surveyor, p6::Context& ctx)
 {
-    float speed = 0.1f;
+    float     speed = 0.05f;
+    glm::vec3 movement(0.0f);
+
     if (ctx.key_is_pressed(GLFW_KEY_W))
     {
-        surveyor.move_z(-speed);
-        surveyor.set_rotation({0, 90, 0});
+        movement.z -= speed;
     }
     if (ctx.key_is_pressed(GLFW_KEY_S))
     {
-        surveyor.move_z(speed);
-        surveyor.set_rotation({0, -90, 0});
+        movement.z += speed;
     }
     if (ctx.key_is_pressed(GLFW_KEY_A))
     {
-        surveyor.move_x(-speed);
-        surveyor.set_rotation({0, 180, 0});
+        movement.x -= speed;
     }
     if (ctx.key_is_pressed(GLFW_KEY_D))
     {
-        surveyor.move_x(speed);
-        surveyor.set_rotation({0, 0, 0});
+        movement.x += speed;
     }
     if (ctx.key_is_pressed(GLFW_KEY_UP))
     {
-        surveyor.move_y(speed);
+        movement.y += speed;
     }
     if (ctx.key_is_pressed(GLFW_KEY_DOWN))
     {
-        surveyor.move_y(-speed);
+        movement.y -= speed;
     }
+
+    surveyor.move(movement);
+}
+
+std::pair<glm::vec3, glm::vec3> calculate_wiggle_offsets(p6::Context& ctx)
+{
+    const float amplitude_position = 0.01f;
+    const float amplitude_rotation = 1.f;
+    const float period_position    = 2.0f;
+    const float period_rotation    = 5.0f;
+
+    glm::vec3 pos_offset(
+        sin(ctx.time() / period_position) * amplitude_position,
+        cos(ctx.time() / period_position * 1.25) * amplitude_position,
+        sin(ctx.time() / period_position * 1.5) * amplitude_position
+    );
+
+    glm::vec3 rot_offset(
+        sin(ctx.time() / period_rotation) * amplitude_rotation,
+        cos(ctx.time() / period_rotation) * amplitude_rotation,
+        sin(ctx.time() / period_rotation * 1.5) * amplitude_rotation
+    );
+
+    return {pos_offset, rot_offset};
+}
+
+void move_surveyor_with_wiggle(GameObject& surveyor, p6::Context& ctx)
+{
+    move_surveyor(surveyor, ctx);
+
+    auto [pos_offset, rot_offset] = calculate_wiggle_offsets(ctx);
+    surveyor.set_position(surveyor.get_position() + pos_offset);
+    surveyor.set_rotation(surveyor.get_rotation() + rot_offset);
 }
 
 void render_game_object(GameObject& object, const glm::mat4& view_matrix, const glm::mat4& proj_matrix, BoidsProgram& program)
@@ -180,7 +211,7 @@ int main()
     astronaut_object.set_scale(glm::vec3(0.25f, 0.25f, 0.25f));
     astronaut_object.set_factors({1.f, 0.5f, 0.5f}, {1.f, 0.5f, 0.5f}, 100.0f);
 
-    GameObject astronaut_edge_object("assets/models/astronaut2.obj", glm::vec3(1.0f, 1.0f, 1.0f));
+    GameObject astronaut_edge_object("assets/models/astronaut2.obj", glm::vec3(.0f, .0f, .0f));
     astronaut_edge_object.set_scale(glm::vec3(0.26f, 0.26f, 0.26f));
     astronaut_edge_object.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
 
@@ -191,7 +222,7 @@ int main()
     GameObject star_object_2("assets/models/star.obj", glm::vec3(1.0f, 0.0f, 0.0f));
     star_object_2.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
 
-    GameObject star_edge_object("assets/models/star.obj", glm::vec3(1.0f, 1.0f, 1.0f));
+    GameObject star_edge_object("assets/models/star.obj", glm::vec3(.0f, .0f, .0f));
     star_edge_object.set_scale(glm::vec3(0.011f, 0.011f, 0.011f));
     star_edge_object.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
 
@@ -225,7 +256,7 @@ int main()
     glm::vec3 lightPosition(0.0f, 0.0f, 0.0f);
     float     lightMotionRadius = 10.0f;
     float     lightMotionSpeed  = 0.5f;
-    lights[0].intensity         = glm::vec3(2.0f, 2.0f, 2.0f);
+    lights[0].intensity         = glm::vec3(3.0f, 3.0f, 3.0f);
 
     ctx.update = [&]() {
         for (auto& b : boids)
@@ -241,7 +272,7 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        move_surveyor(astronaut_object, ctx);
+        move_surveyor_with_wiggle(astronaut_object, ctx);
         camera.set_center(astronaut_object.get_position());
         handle_camera_input(ctx, camera, last_x, last_y);
 
@@ -256,11 +287,11 @@ int main()
         star_object.set_position(lightPosition);
         lights[0].position = glm::vec3(view_matrix * glm::vec4(lightPosition, 1.0));
 
-        astronaut_object.move_y(1.2f);
+        astronaut_object.move_y(1.1f);
         star_object_2.set_position(astronaut_object.get_position());
         lights[1].position  = glm::vec3(view_matrix * glm::vec4(astronaut_object.get_position(), 1.0));
         lights[1].intensity = glm::vec3(2.f, 1.5f, 1.5f);
-        astronaut_object.move_y(-1.2f);
+        astronaut_object.move_y(-1.1f);
 
         boids_program.program.use();
         glUniform3fv(boids_program.u_light_pos_vs_0, 1, glm::value_ptr(lights[0].position));
@@ -289,7 +320,9 @@ int main()
             vao.unbind();
         }
 
+        // space_wiggle(astronaut_object, ctx);
         astronaut_edge_object.set_position(astronaut_object.get_position());
+        astronaut_edge_object.set_rotation(astronaut_object.get_rotation());
 
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
@@ -301,16 +334,15 @@ int main()
 
         star_edge_object.set_position(star_object_2.get_position());
         render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
-
+        render_game_object(space_object, view_matrix, proj_matrix, boids_program);
         glCullFace(GL_BACK);
         render_game_object(astronaut_object, view_matrix, proj_matrix, boids_program);
         render_game_object(star_object, view_matrix, proj_matrix, boids_program);
         render_game_object(star_object_2, view_matrix, proj_matrix, boids_program);
+
         glDisable(GL_CULL_FACE);
 
-        render_game_object(space_object, view_matrix, proj_matrix, boids_program);
         render_game_object(star_object, view_matrix, proj_matrix, boids_program);
-        render_game_object(space_object, view_matrix, proj_matrix, boids_program);
     };
 
     ctx.start();

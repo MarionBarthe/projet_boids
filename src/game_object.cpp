@@ -97,20 +97,28 @@ void GameObject::update_model_matrix()
     model_matrix = glm::scale(model_matrix, scale);
 }
 
-void GameObject::move_x(float offset)
+void GameObject::move_x(const float offset)
 {
     position.x += offset;
     update_model_matrix();
 }
 
-void GameObject::move_y(float offset)
+void GameObject::move_y(const float offset)
 {
     position.y += offset;
     update_model_matrix();
 }
 
-void GameObject::move_z(float offset)
+void GameObject::move_z(const float offset)
 {
     position.z += offset;
+    update_model_matrix();
+}
+
+void GameObject::move(const glm::vec3 offset)
+{
+    position.x += offset.x;
+    position.y += offset.y;
+    position.z += offset.z;
     update_model_matrix();
 }
