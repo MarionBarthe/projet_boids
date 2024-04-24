@@ -17,11 +17,7 @@
     - double beta_distribution(double alpha, double beta)
 */
 
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
-#include <iostream>
-#include <vector>
+#include "random_generator.hpp"
 
 // Calculate the binomial coefficient, (n k), representing the number of ways to choose k items from a set of n distinct items
 unsigned long long binomial_coefficient(int n, int k)

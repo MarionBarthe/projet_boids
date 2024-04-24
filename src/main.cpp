@@ -17,6 +17,8 @@
 #include "vbo.hpp"
 #define DOCTEST_CONFIG_IMPLEMENT
 #include "doctest/doctest.h"
+#include "markov_chain.hpp"
+#include "random_generator.hpp"
 
 struct BoidsProgram {
     p6::Shader program;
@@ -37,6 +39,9 @@ struct BoidsProgram {
     GLint u_light_intensity_0;
     GLint u_light_pos_vs_1;
     GLint u_light_intensity_1;
+
+    double next_event_time = 0.0;
+    double lambda          = 1 / 20;
 
     BoidsProgram()
         : program{p6::load_shader(
@@ -65,6 +70,27 @@ struct Light {
     glm::vec3 position;  // Light position in view space
     glm::vec3 intensity; // Light intensity
 };
+
+struct TimeParameters {
+};
+
+void baba()
+{
+    std::cout << "baba() appelée" << std::endl;
+}
+
+void time_events(BoidsProgram& program, p6::Context& ctx)
+{
+    double current_time = ctx.time();
+    if (current_time >= program.next_event_time)
+    {
+        baba();
+
+        double delay            = exponential_distribution(program.lambda);
+        program.next_event_time = current_time + delay;
+        std::cout << "Prochain événement dans: " << delay << " secondes." << std::endl;
+    }
+}
 
 void handle_camera_input(p6::Context& ctx, TrackballCamera& camera, float& last_x, float& last_y)
 {
@@ -247,8 +273,7 @@ int main()
     vao.unbind();
     vbo_vertices.unbind();
 
-    std::vector<glm::vec3> rotation_axes(boids.size());
-    std::generate(rotation_axes.begin(), rotation_axes.end(), []() { return glm::sphericalRand(1.0f); });
+    std::vector<glm::vec3> rotation_axes(boids.size(), glm::vec3(0.0f, 0.0f, 0.0f));
 
     float last_x = 0;
     float last_y = 0;
@@ -264,6 +289,8 @@ int main()
             b.draw(ctx, coeffs.radius_awareness);
             b.update(&ctx, boids, coeffs);
         }
+
+        time_events(boids_program, ctx);
 
         ImGui::Begin("Boids command panel");
         ImGui::Text("Play with the parameters of the flock!");

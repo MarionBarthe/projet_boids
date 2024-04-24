@@ -1,6 +1,8 @@
-#ifndef MARKOV_CHAIN_HPP
-#define MARKOV_CHAIN_HPP
+#pragma once
 
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
 #include <iostream>
 #include <vector>
 
@@ -31,5 +33,3 @@ public:
 
     std::vector<double> calculate_stationary_distribution();
 };
-
-#endif // MARKOV_CHAIN_HPP
