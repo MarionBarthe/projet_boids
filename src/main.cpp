@@ -279,6 +279,10 @@ int main()
     GameObject jupiter_object("assets/models/planet.obj", "assets/textures/2k_jupiter.jpg");
     GameObject mars_object("assets/models/planet.obj", "assets/textures/2k_mars.jpg");
     GameObject neptune_object("assets/models/planet.obj", "assets/textures/2k_neptune.jpg");
+    GameObject mercury_object("assets/models/planet.obj", "assets/textures/2k_mercury.jpg");
+    GameObject uranus_object("assets/models/planet.obj", "assets/textures/2k_uranus.jpg");
+    GameObject venus_surface_object("assets/models/planet.obj", "assets/textures/2k_venus_surface.jpg");
+    GameObject venus_atmosphere_object("assets/models/planet.obj", "assets/textures/2k_venus_atmosphere.jpg");
     GameObject planet_edge_object("assets/models/planet.obj", glm::vec3(.0f, .0f, .0f));
     planet_edge_object.set_scale({1.01f, 1.1f, 1.01f});
     planet_edge_object.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
@@ -295,7 +299,7 @@ int main()
         double y = (beta_distribution(1.0, 1.0) - 0.5) * scale_cube; // uniform
         double z = (beta_distribution(1.0, 1.0) - 0.5) * scale_cube; // edge
 
-        int texture_index = discrete_uniform_distribution(0, 2);
+        int texture_index = discrete_uniform_distribution(0, 6);
 
         planet_positions_and_textures[i] = glm::vec4(x, y, z, static_cast<float>(texture_index));
     }
@@ -442,20 +446,40 @@ int main()
 
         for (const auto& planet : planet_positions_and_textures)
         {
-            if (planet.w == 0)
+            switch (static_cast<int>(planet.w))
             {
+            case 0:
                 jupiter_object.set_position({planet[0], planet[1], planet[2]});
                 render_game_object(jupiter_object, view_matrix, proj_matrix, boids_program);
-            }
-            else if (planet.w == 1)
-            {
+                break;
+            case 1:
                 mars_object.set_position({planet[0], planet[1], planet[2]});
                 render_game_object(mars_object, view_matrix, proj_matrix, boids_program);
-            }
-            else
-            {
+                break;
+            case 2:
                 neptune_object.set_position({planet[0], planet[1], planet[2]});
                 render_game_object(neptune_object, view_matrix, proj_matrix, boids_program);
+                break;
+            case 3:
+                // Supposons que "earth_object" est une autre planète à rendre
+                venus_atmosphere_object.set_position({planet[0], planet[1], planet[2]});
+                render_game_object(venus_atmosphere_object, view_matrix, proj_matrix, boids_program);
+                break;
+            case 4:
+                // Supposons que "venus_object" est une autre planète à rendre
+                venus_surface_object.set_position({planet[0], planet[1], planet[2]});
+                render_game_object(venus_surface_object, view_matrix, proj_matrix, boids_program);
+                break;
+            case 5:
+                // Supposons que "mercury_object" est une autre planète à rendre
+                mercury_object.set_position({planet[0], planet[1], planet[2]});
+                render_game_object(mercury_object, view_matrix, proj_matrix, boids_program);
+                break;
+            default:
+                // Supposons que "saturn_object" est une autre planète à rendre
+                uranus_object.set_position({planet[0], planet[1], planet[2]});
+                render_game_object(uranus_object, view_matrix, proj_matrix, boids_program);
+                break;
             }
         }
 
