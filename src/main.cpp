@@ -192,6 +192,40 @@ void move_surveyor_with_wiggle(GameObject& surveyor, p6::Context& ctx)
     surveyor.set_rotation(surveyor.get_rotation() + rot_offset);
 }
 
+glm::vec3 hsv_to_rgb(float h, float s, float v)
+{
+    glm::vec3 rgb;
+    int       i = static_cast<int>(h * 6);
+    float     f = h * 6 - i;
+    float     p = v * (1 - s);
+    float     q = v * (1 - f * s);
+    float     t = v * (1 - (1 - f) * s);
+
+    switch (i % 6)
+    {
+    case 0: rgb.r = v, rgb.g = t, rgb.b = p; break;
+    case 1: rgb.r = q, rgb.g = v, rgb.b = p; break;
+    case 2: rgb.r = p, rgb.g = v, rgb.b = t; break;
+    case 3: rgb.r = p, rgb.g = q, rgb.b = v; break;
+    case 4: rgb.r = t, rgb.g = p, rgb.b = v; break;
+    case 5: rgb.r = v, rgb.g = p, rgb.b = q; break;
+    }
+
+    return rgb;
+}
+
+glm::vec3 generate_vivid_color()
+{
+    // Use discrete_uniform_distribution to generate a hue value
+    float h = static_cast<float>(discrete_uniform_distribution(0, 360)) / 360.0f; // Hue value between 0 and 1
+    float s = 0.9f;                                                               // High saturation for vivid colors
+    float v = 1.0f;                                                               // High value for vivid colors
+
+    glm::vec3 rgb = hsv_to_rgb(h, s, v);
+
+    return (rgb);
+}
+
 void render_game_object(GameObject& object, const glm::mat4& view_matrix, const glm::mat4& proj_matrix, BoidsProgram& program)
 {
     glm::mat4 model_matrix  = object.get_model_matrix();
@@ -266,11 +300,11 @@ int main()
     astronaut_edge_object.set_scale(glm::vec3(0.26f, 0.26f, 0.26f));
     astronaut_edge_object.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
 
-    GameObject star_object("assets/models/star.obj", glm::vec3(0.0f, 1.0f, 1.0f));
+    GameObject star_object("assets/models/star.obj", generate_vivid_color());
     star_object.set_position(glm::vec3(0.f, 0.f, -1.f));
     star_object.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
 
-    GameObject star_object_2("assets/models/star.obj", glm::vec3(1.0f, 0.0f, 0.0f));
+    GameObject star_object_2("assets/models/star.obj", generate_vivid_color());
     star_object_2.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
 
     GameObject star_edge_object("assets/models/star.obj", glm::vec3(.0f, .0f, .0f));
@@ -451,7 +485,7 @@ int main()
 
         for (const auto& planet : planet_positions_and_textures)
         {
-            switch (static_cast<int>(planet.w))
+            switch (static_cast<int>(planet[3]))
             {
             case 0:
                 jupiter_object.set_position({planet[0], planet[1], planet[2]});
@@ -466,22 +500,18 @@ int main()
                 render_game_object(neptune_object, view_matrix, proj_matrix, boids_program);
                 break;
             case 3:
-                // Supposons que "earth_object" est une autre planète à rendre
                 venus_atmosphere_object.set_position({planet[0], planet[1], planet[2]});
                 render_game_object(venus_atmosphere_object, view_matrix, proj_matrix, boids_program);
                 break;
             case 4:
-                // Supposons que "venus_object" est une autre planète à rendre
                 venus_surface_object.set_position({planet[0], planet[1], planet[2]});
                 render_game_object(venus_surface_object, view_matrix, proj_matrix, boids_program);
                 break;
             case 5:
-                // Supposons que "mercury_object" est une autre planète à rendre
                 mercury_object.set_position({planet[0], planet[1], planet[2]});
                 render_game_object(mercury_object, view_matrix, proj_matrix, boids_program);
                 break;
             default:
-                // Supposons que "saturn_object" est une autre planète à rendre
                 uranus_object.set_position({planet[0], planet[1], planet[2]});
                 render_game_object(uranus_object, view_matrix, proj_matrix, boids_program);
                 break;
