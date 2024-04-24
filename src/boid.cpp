@@ -19,29 +19,32 @@ static glm::vec3 limit(glm::vec3 force)
     // }
     return force;
 }
+static void edge_control(float position, float edge_limit)
+{
+    float edge_offset = 0.05;
 
-void Boid::update(p6::Context* ctx, const std::vector<Boid>& boids, Coeffs coeffs)
+    if (position <= -edge_limit)
+        position = edge_limit - edge_offset;
+    else if (position >= edge_limit)
+        position = -(edge_limit - edge_offset);
+}
+
+void Boid::update(p6::Context* ctx, const std::vector<Boid>& boids, Boid_variables variables)
 {
     glm::vec3 acceleration{0.f};
 
-    acceleration += cohesion(boids, coeffs.radius_awareness) * coeffs.cohesion;
-    acceleration += align(boids, coeffs.radius_awareness) * coeffs.align;
-    acceleration += separate(boids, coeffs.radius_awareness) * coeffs.separate;
+    acceleration += cohesion(boids, variables.radius_awareness) * variables.cohesion;
+    acceleration += align(boids, variables.radius_awareness) * variables.align;
+    acceleration += separate(boids, variables.radius_awareness) * variables.separate;
 
     m_velocity += acceleration;
     m_velocity = limit(m_velocity);
     m_position += m_velocity;
 
     // gère les bords pour que les boids ne sortent pas de la fenetre
-    if (m_position.x <= -coeffs.square_length)
-        m_position.x = coeffs.square_length - 0.005f;
-    else if (m_position.x >= coeffs.square_length)
-        m_position.x = -(coeffs.square_length - 0.005f);
-
-    if (m_position.y <= -coeffs.square_length)
-        m_position.y = coeffs.square_length - 0.005f;
-    else if (m_position.y >= coeffs.square_length)
-        m_position.y = -(coeffs.square_length - 0.005f);
+    edge_control(m_position.x, variables.cube_length);
+    edge_control(m_position.y, variables.cube_length);
+    edge_control(m_position.z, variables.cube_length);
 };
 
 void Boid::draw(p6::Context& ctx, float radius_awareness)

@@ -3,14 +3,8 @@
 #include "glm/gtc/random.hpp"
 #include "p6/p6.h"
 
-struct Cube {
-    float width  = 4.0f;
-    float height = 4.0f;
-    float depth  = 4.0f;
-}; 
-
-struct Coeffs {
-    float square_length    = 0.8;
+struct Boid_variables {
+    float cube_length    = 20.8;
     float radius_awareness = 0.2;
     float separate         = 0.02;
     float align            = 0.05;
@@ -22,7 +16,6 @@ struct Coeffs {
         ImGui::SliderFloat("Cohesion", &cohesion, 0.0f, .1f);
         ImGui::SliderFloat("Separate", &separate, 0.0f, .1f);
         ImGui::SliderFloat("Radius of awareness", &radius_awareness, 0.0f, 1.f);
-        ImGui::SliderFloat("Length of the borders", &square_length, 0.0f, 1.f);
     }
 };
 class Boid {
@@ -44,7 +37,7 @@ public:
     Boid()
         : m_position(random_position())
         , m_velocity(glm::vec3(random_position())){};
-    void      update(p6::Context* ctx, const std::vector<Boid>& boids, Coeffs coeffs);
+    void      update(p6::Context* ctx, const std::vector<Boid>& boids, Boid_variables variables);
     void      draw(p6::Context& ctx, float radius_awareness);
     glm::vec3 get_position() const
     {
