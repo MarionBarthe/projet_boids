@@ -1,8 +1,8 @@
 #pragma once
 
 #include "maths/color.hpp"
-#include "p6/p6.h"
 #include "maths/random_generator.hpp"
+#include "p6/p6.h"
 
 struct BoidVariables {
     float cube_length      = 10.4;
@@ -21,16 +21,25 @@ struct BoidVariables {
         ImGui::Checkbox("Low Poly", &isLowPoly);
     }
 };
+
 class Boid {
 private:
     glm::vec3 m_position;
     glm::vec3 m_velocity;
     Color     m_color;
 
+    glm::vec3 random_position(float min, float max)
+    {
+        float x = static_cast<float>(uniform_distribution(min, max));
+        float y = static_cast<float>(uniform_distribution(min, max));
+        float z = static_cast<float>(uniform_distribution(min, max));
+        return {x, y, z};
+    }
+
 public:
     Boid()
-        : m_position(static_cast<float>(uniform_distribution(-2., 2.)))
-        , m_velocity(static_cast<float>(uniform_distribution(-4., 4.)))
+        : m_position(random_position(-2., 2.))
+        , m_velocity(random_position(-4., 4.))
         , m_color(generate_vivid_color()){};
 
     glm::vec3 get_position() const { return m_position; };
