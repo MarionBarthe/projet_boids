@@ -41,6 +41,7 @@ public:
     float     get_shininess_factor() const { return shininess_factor; }
 
     void change_texture(const std::string& texture_path);
+    void change_color(const glm::vec3& color);
 
     void interpolate_material_factors(const glm::vec3& target_diffuse, const glm::vec3& target_specular, float target_shininess, float blend_factor);
 
