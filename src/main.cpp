@@ -19,8 +19,9 @@
 #include "doctest/doctest.h"
 #include "markov_chain.hpp"
 #include "random_generator.hpp"
+#include "surveyor.hpp"
 
-struct BoidsProgram { //TODO mettre dans une classe 
+struct BoidsProgram { // TODO mettre dans une classe
     p6::Shader program;
 
     GLint u_MVP_matrix;
@@ -40,7 +41,7 @@ struct BoidsProgram { //TODO mettre dans une classe
     GLint u_light_pos_vs_1;
     GLint u_light_intensity_1;
 
-    double next_event_time = 0.0;
+    double       next_event_time = 0.0;
     const double lambda          = 1.0 / 3; // Every 3 seconds
 
     BoidsProgram()
@@ -71,24 +72,12 @@ struct Light {
     glm::vec3 intensity; // Light intensity
 };
 
-void change_astronaut_temperament(MarkovChain& chain) //TODO arpenteur
-{
-    // Perform transitions
-    chain.transition_values();
-    chain.display_state_counts();
-    // Display the current state and count of states every 10 transitions
-    if (chain.get_number_of_states() % 10 == 0)
-    {
-        print_container(chain.calculate_stationary_distribution());
-    }
-}
-
-void time_events(BoidsProgram& program, MarkovChain& chain, p6::Context& ctx) //TODO Boidsprogram?
+void time_events(BoidsProgram& program, Surveyor& chain, p6::Context& ctx) // TODO Boidsprogram?
 {
     double current_time = ctx.time();
     if (current_time >= program.next_event_time)
     {
-        change_astronaut_temperament(chain);
+        chain.next_feeling();
 
         double delay            = exponential_distribution(program.lambda);
         program.next_event_time = current_time + delay;
@@ -128,71 +117,7 @@ void handle_camera_input(p6::Context& ctx, TrackballCamera& camera, float& last_
     };
 }
 
-void move_surveyor(GameObject& surveyor, p6::Context& ctx) //TODO arpenteur
-{
-    float     speed = 0.05f;
-    glm::vec3 movement(0.0f);
-
-    if (ctx.key_is_pressed(GLFW_KEY_W))
-    {
-        movement.z -= speed;
-    }
-    if (ctx.key_is_pressed(GLFW_KEY_S))
-    {
-        movement.z += speed;
-    }
-    if (ctx.key_is_pressed(GLFW_KEY_A))
-    {
-        movement.x -= speed;
-    }
-    if (ctx.key_is_pressed(GLFW_KEY_D))
-    {
-        movement.x += speed;
-    }
-    if (ctx.key_is_pressed(GLFW_KEY_UP))
-    {
-        movement.y += speed;
-    }
-    if (ctx.key_is_pressed(GLFW_KEY_DOWN))
-    {
-        movement.y -= speed;
-    }
-
-    surveyor.move(movement);
-}
-
-std::pair<glm::vec3, glm::vec3> calculate_wiggle_offsets(p6::Context& ctx) //TODO arpenteur
-{
-    const float amplitude_position = 0.01f;
-    const float amplitude_rotation = 0.25f;
-    const float period_position    = 2.0f;
-    const float period_rotation    = 5.0f;
-
-    glm::vec3 pos_offset(
-        sin(ctx.time() / period_position) * amplitude_position,
-        cos(ctx.time() / period_position * 1.25) * amplitude_position,
-        sin(ctx.time() / period_position * 1.5) * amplitude_position
-    );
-
-    glm::vec3 rot_offset(
-        sin(ctx.time() / period_rotation) * amplitude_rotation,
-        cos(ctx.time() / period_rotation) * amplitude_rotation,
-        sin(ctx.time() / period_rotation * 1.5) * amplitude_rotation
-    );
-
-    return {pos_offset, rot_offset};
-}
-
-void move_surveyor_with_wiggle(GameObject& surveyor, p6::Context& ctx) //TODO arpenteur
-{
-    move_surveyor(surveyor, ctx);
-
-    auto [pos_offset, rot_offset] = calculate_wiggle_offsets(ctx);
-    surveyor.set_position(surveyor.get_position() + pos_offset);
-    surveyor.set_rotation(surveyor.get_rotation() + rot_offset);
-}
-
-glm::vec3 hsv_to_rgb(float h, float s, float v) //TODO Couleur
+glm::vec3 hsv_to_rgb(float h, float s, float v) // TODO Couleur
 {
     glm::vec3 rgb;
     int       i = static_cast<int>(h * 6);
@@ -214,7 +139,7 @@ glm::vec3 hsv_to_rgb(float h, float s, float v) //TODO Couleur
     return rgb;
 }
 
-glm::vec3 generate_vivid_color() //TODO couleur
+glm::vec3 generate_vivid_color() // TODO couleur
 {
     float h = static_cast<float>(discrete_uniform_distribution(0, 360)) / 360.0f; // Hue value between 0 and 1
     float s = 0.7f;                                                               // High saturation for vivid colors
@@ -225,7 +150,7 @@ glm::vec3 generate_vivid_color() //TODO couleur
     return (rgb);
 }
 
-void render_game_object(GameObject& object, const glm::mat4& view_matrix, const glm::mat4& proj_matrix, BoidsProgram& program) //TODO game object
+void render_game_object(GameObject& object, const glm::mat4& view_matrix, const glm::mat4& proj_matrix, BoidsProgram& program) // TODO game object
 {
     glm::mat4 model_matrix  = object.get_model_matrix();
     glm::mat4 MV_matrix     = view_matrix * model_matrix;
@@ -280,24 +205,22 @@ int main()
     }
     int colors_i = 0;
 
-    std::vector<std::vector<double>> astronaut_transition_matrix = {
+    GameObject astronaut_object("assets/models/thwomp.obj", "assets/textures/thwomp_texture.jpg");
+    if (bernoulli_distribution(0.1))
+    {
+        astronaut_object.change_texture("assets/textures/thwomp_shiny_texture.jpg");
+    }
+
+    std::vector<std::vector<double>> transition_matrix = {
         {0.4, 0.1, 0.2, 0.1, 0.2}, // Happy to Happy, Sad, Angry, Scared, Relaxed
         {0.2, 0.3, 0.1, 0.1, 0.3}, // Sad to Happy, Sad, Angry, Scared, Relaxed
         {0.1, 0.2, 0.4, 0.1, 0.2}, // Angry to Happy, Sad, Angry, Scared, Relaxed
         {0.1, 0.2, 0.1, 0.4, 0.2}, // Scared to Happy, Sad, Angry, Scared, Relaxed
         {0.3, 0.1, 0.1, 0.1, 0.4}  // Relaxed to Happy, Sad, Angry, Scared, Relaxed
     };
+    std::vector<double> initial_state = {0.2, 0.1, 0.1, 0.1, 0.5};
 
-    std::vector<double> astronaut_initial_state = {0.2, 0.1, 0.1, 0.1, 0.5};
-
-    // Create Markov chain object
-    MarkovChain astronaut_chain(astronaut_transition_matrix, astronaut_initial_state);
-
-    GameObject astronaut_object("assets/models/thwomp.obj", "assets/textures/thwomp_texture.jpg");
-    if (bernoulli_distribution(0.1))
-    {
-        astronaut_object.change_texture("assets/textures/thwomp_shiny_texture.jpg");
-    }
+    Surveyor player(&astronaut_object, transition_matrix, initial_state);
 
     astronaut_object.set_position(glm::vec3(0.f, 0.f, -5.f));
     astronaut_object.set_scale(glm::vec3(0.25f, 0.25f, 0.25f));
@@ -348,7 +271,7 @@ int main()
 
     float scale_cube = 180 * 0.1;
 
-    for (int i = 0; i < number_of_planets; i++) //TODO planete
+    for (int i = 0; i < number_of_planets; i++) // TODO planete
     {
         double x = (beta_distribution(1.0, 1.0) - 0.5) * scale_cube;
         double y = (beta_distribution(1.0, 1.0) - 0.5) * scale_cube;
@@ -362,25 +285,6 @@ int main()
         planet_positions_and_textures[i] = std::vector<double>{x, y, z, static_cast<double>(texture_index), rotation_random[0] * 10, rotation_random[1] * 10};
     }
 
-    GLuint texture_object_moon = TextureManager::load_texture("assets/textures/MoonMap.jpg");
-
-    VBO vbo_vertices;
-    vbo_vertices.bind();
-    const std::vector<glimac::ShapeVertex> vertices = glimac::sphere_vertices(1.f, 32, 16);
-    vbo_vertices.fill(vertices.data(), vertices.size() * sizeof(glimac::ShapeVertex), GL_STATIC_DRAW);
-    vbo_vertices.unbind();
-
-    VAO vao;
-    vao.bind();
-    vbo_vertices.bind();
-    vao.specify_attribute(0, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, position)));
-    vao.specify_attribute(1, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, normal)));
-    vao.specify_attribute(2, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, texCoords)));
-    vao.unbind();
-    vbo_vertices.unbind();
-
-    std::vector<glm::vec3> rotation_axes(boids.size(), glm::vec3(0.0f, 0.0f, 0.0f));
-
     float last_x = 0;
     float last_y = 0;
 
@@ -390,7 +294,7 @@ int main()
     lights[0].intensity         = glm::vec3(2.0f, 2.0f, 2.0f);
 
     ctx.update = [&]() {
-        time_events(boids_program, astronaut_chain, ctx);
+        time_events(boids_program, player, ctx);
 
         ImGui::Begin("Boids command panel");
         ImGui::Text("Play with the parameters of the flock!");
@@ -400,7 +304,7 @@ int main()
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        move_surveyor_with_wiggle(astronaut_object, ctx);
+        player.move_surveyor_with_wiggle(ctx);
         camera.set_center(astronaut_object.get_position());
         handle_camera_input(ctx, camera, last_x, last_y);
 
@@ -420,29 +324,8 @@ int main()
         lights[1].position = glm::vec3(view_matrix * glm::vec4(astronaut_object.get_position(), 1.0));
         astronaut_object.move_y(-1.1f);
 
-        switch (astronaut_chain.get_deterministic_current_state()) // TODO arpenteur
-        {
-        case 0:                                                                                                   // Happy
-            astronaut_object.interpolate_material_factors({0.7f, 0.7f, 0.7f}, {0.8f, 0.8f, 0.8f}, 100.0f, 0.05f); // Slightly shiny stone
-            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(2.5f, 2.5f, 2.0f), 0.1f);               // Warm, bright light
-            break;
-        case 1:                                                                                                    // Sad
-            astronaut_object.interpolate_material_factors({0.5f, 0.5f, 0.55f}, {0.4f, 0.4f, 0.45f}, 30.0f, 0.05f); // Duller, slightly bluish stone
-            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(1.0f, 1.0f, 2.0f), 0.1f);                // Dimmer, cooler light
-            break;
-        case 2:                                                                                                  // Angry
-            astronaut_object.interpolate_material_factors({0.6f, 0.3f, 0.3f}, {0.6f, 0.3f, 0.3f}, 50.0f, 0.05f); // Darker, reddish stone
-            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(3.0f, 0.5f, 0.5f), 0.1f);              // Reddish, intense light
-            break;
-        case 3:                                                                                                  // Scared
-            astronaut_object.interpolate_material_factors({0.4f, 0.4f, 0.5f}, {0.5f, 0.5f, 0.6f}, 25.0f, 0.05f); // Darker, slightly purplish stone
-            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(1.5f, 1.5f, 2.5f), 0.1f);              // Dim, purple light
-            break;
-        default:                                                                                                   // Relaxed
-            astronaut_object.interpolate_material_factors({0.6f, 0.65f, 0.7f}, {0.7f, 0.75f, 0.8f}, 70.0f, 0.05f); // Calm, slightly bluish stone
-            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(1.0f, 2.0f, 2.5f), 0.1f);                // Soft, blue-green light
-            break;
-        }
+        player.adapt_feeling();
+        lights[1].intensity = player.get_light_intensity();
 
         boids_program.program.use();
         glUniform3fv(boids_program.u_light_pos_vs_0, 1, glm::value_ptr(lights[0].position));
@@ -503,7 +386,7 @@ int main()
         }
         colors_i = 0;
 
-        for (const auto& planet : planet_positions_and_textures) //TODO dans classe planete
+        for (const auto& planet : planet_positions_and_textures) // TODO dans classe planete
         {
             switch (static_cast<int>(planet[3]))
             {
