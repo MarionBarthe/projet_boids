@@ -4,7 +4,7 @@
 // #include "glm/gtc/type_ptr.hpp"
 
 GameObject::GameObject(const std::string& model_path, const std::string& texture_path)
-    : m_use_texture(true), position(glm::vec3(0.0f)), rotation(glm::vec3(0.0f)), scale(1.0f),  m_3D_model(Model(model_path))
+    : m_use_texture(true), position(glm::vec3(0.0f)), rotation(glm::vec3(0.0f)), scale(1.0f), m_3D_model(Model(model_path))
 {
     load_texture(texture_path);
     update_model_matrix();
