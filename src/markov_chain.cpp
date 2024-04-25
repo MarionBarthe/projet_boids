@@ -89,7 +89,7 @@ void MarkovChain::transition_probabilities()
     // }
     // std::cout << '\n';
 
-    // current_state = next_state;
+    current_state = next_state;
 }
 
 void MarkovChain::collapse_values()
