@@ -3,7 +3,6 @@
 #include <glm/glm.hpp>
 #include <string>
 #include "3D_model.hpp"
-// #include "glm/fwd.hpp"
 
 class GameObject {
 private:
@@ -24,8 +23,6 @@ private:
 public:
     GameObject(const std::string& model_path, const std::string& texture_path);
     GameObject(const std::string& model_path, const glm::vec3& color);
-
-    // ~GameObject();
 
     void set_position(const glm::vec3& new_position);
     void set_rotation(const glm::vec3& new_rotation);

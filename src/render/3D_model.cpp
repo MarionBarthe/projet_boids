@@ -1,5 +1,5 @@
 #include "3D_model.hpp"
-#include "model_loader.hpp"
+#include "3D_loader/model_loader.hpp"
 
 
 Model::Model(const std::string& model_path)

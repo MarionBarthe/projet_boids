@@ -1,10 +1,5 @@
 #pragma once
 
-#include <algorithm>
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
-#include <iostream>
 #include <vector>
 
 unsigned long long binomial_coefficient(int n, int k);

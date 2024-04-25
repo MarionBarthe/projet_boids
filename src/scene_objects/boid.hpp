@@ -1,8 +1,8 @@
 #pragma once
 
-#include "color.hpp"
+#include "maths/color.hpp"
 #include "p6/p6.h"
-#include "random_generator.hpp"
+#include "maths/random_generator.hpp"
 
 struct BoidVariables {
     float cube_length      = 10.4;

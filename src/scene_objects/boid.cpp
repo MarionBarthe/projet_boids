@@ -1,7 +1,5 @@
 #include "boid.hpp"
-#include <iostream>
 #include "cmath"
-#include "glm/ext/quaternion_geometric.hpp"
 #include "glm/gtx/norm.hpp"
 
 static glm::vec3 limit(glm::vec3 force)
@@ -38,9 +36,9 @@ void Boid::update(p6::Context* ctx, const std::vector<Boid>& boids, BoidVariable
 
     // to keep the boids inside the cube
     float edge_offset = 4.;
-    manage_edge_collision(m_position.x, variables.cube_length, edge_offset);
-    manage_edge_collision(m_position.y, variables.cube_length, edge_offset);
-    manage_edge_collision(m_position.z, variables.cube_length, edge_offset);
+    m_position.x      = manage_edge_collision(m_position.x, variables.cube_length, edge_offset);
+    m_position.y      = manage_edge_collision(m_position.y, variables.cube_length, edge_offset);
+    m_position.z      = manage_edge_collision(m_position.z, variables.cube_length, edge_offset);
 }
 
 glm::vec3 Boid::align(const std::vector<Boid>& boids, float radius_awareness)

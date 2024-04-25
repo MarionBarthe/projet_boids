@@ -1,7 +1,6 @@
 #include "game_object.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include "texture_manager.hpp"
-// #include "glm/gtc/type_ptr.hpp"
 
 GameObject::GameObject(const std::string& model_path, const std::string& texture_path)
     : m_use_texture(true), m_position(glm::vec3(0.0f)), m_rotation(glm::vec3(0.0f)), m_scale(1.0f), m_3D_model(Model(model_path))

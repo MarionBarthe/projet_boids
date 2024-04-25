@@ -1,8 +1,8 @@
 #pragma once
 
 #include <vector>
-#include "game_object.hpp"
-#include "markov_chain.hpp"
+#include "render/game_object.hpp"
+#include "maths/markov_chain.hpp"
 #include "p6/p6.h"
 
 class Surveyor {
