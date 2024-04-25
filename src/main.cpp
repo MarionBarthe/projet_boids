@@ -164,7 +164,7 @@ void move_surveyor(GameObject& surveyor, p6::Context& ctx)
 std::pair<glm::vec3, glm::vec3> calculate_wiggle_offsets(p6::Context& ctx)
 {
     const float amplitude_position = 0.01f;
-    const float amplitude_rotation = 0.05f;
+    const float amplitude_rotation = 0.25f;
     const float period_position    = 2.0f;
     const float period_rotation    = 5.0f;
 
@@ -216,10 +216,9 @@ glm::vec3 hsv_to_rgb(float h, float s, float v)
 
 glm::vec3 generate_vivid_color()
 {
-    // Use discrete_uniform_distribution to generate a hue value
     float h = static_cast<float>(discrete_uniform_distribution(0, 360)) / 360.0f; // Hue value between 0 and 1
-    float s = 0.9f;                                                               // High saturation for vivid colors
-    float v = 1.0f;                                                               // High value for vivid colors
+    float s = 0.7f;                                                               // High saturation for vivid colors
+    float v = 0.9f;                                                               // High value for vivid colors
 
     glm::vec3 rgb = hsv_to_rgb(h, s, v);
 
@@ -272,6 +271,14 @@ int main()
     std::vector<Boid> boids(80);
     BoidsProgram      boids_program{};
     Light             lights[2];
+
+    std::vector<glm::vec3> colors;
+    colors.reserve(80);
+    for (int i = 0; i < 80; ++i)
+    {
+        colors.push_back(generate_vivid_color());
+    }
+    u_int colors_i = 0;
 
     std::vector<std::vector<double>> astronaut_transition_matrix = {
         {0.4, 0.1, 0.2, 0.1, 0.2}, // Happy to Happy, Sad, Angry, Scared, Relaxed
@@ -480,17 +487,21 @@ int main()
         {
             if (coeffs.isLowPoly)
             {
+                star_boid_low.change_color(colors[colors_i]);
                 star_boid_low.set_position(b.get_position());
                 render_game_object(star_boid_low, view_matrix, proj_matrix, boids_program);
             }
             else
             {
+                star_boid.change_color(colors[colors_i]);
                 star_boid.set_position(b.get_position());
                 render_game_object(star_boid, view_matrix, proj_matrix, boids_program);
             }
 
+            colors_i++;
             b.update(&ctx, boids, coeffs);
         }
+        colors_i = 0;
 
         for (const auto& planet : planet_positions_and_textures)
         {
