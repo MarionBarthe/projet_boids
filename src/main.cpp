@@ -41,7 +41,7 @@ struct BoidsProgram {
     GLint u_light_intensity_1;
 
     double next_event_time = 0.0;
-    double lambda          = 1.0 / 5; // Every 5 seconds
+    double lambda          = 1.0 / 3; // Every 3 seconds
 
     BoidsProgram()
         : program{p6::load_shader(
@@ -164,7 +164,7 @@ void move_surveyor(GameObject& surveyor, p6::Context& ctx)
 std::pair<glm::vec3, glm::vec3> calculate_wiggle_offsets(p6::Context& ctx)
 {
     const float amplitude_position = 0.01f;
-    const float amplitude_rotation = 1.f;
+    const float amplitude_rotation = 0.05f;
     const float period_position    = 2.0f;
     const float period_rotation    = 5.0f;
 
@@ -286,17 +286,18 @@ int main()
     // Create Markov chain object
     MarkovChain astronaut_chain(astronaut_transition_matrix, astronaut_initial_state);
 
-    GameObject astronaut_object("assets/models/astronaut.obj", "assets/textures/astronaut_texture.jpg");
+    GameObject astronaut_object("assets/models/thwomp.obj", "assets/textures/thwomp_texture.jpg");
     if (bernoulli_distribution(0.1))
     {
-        astronaut_object.change_texture("assets/textures/astronaut_shiny_texture.jpg");
+        astronaut_object.change_texture("assets/textures/thwomp_shiny_texture.jpg");
     }
 
     astronaut_object.set_position(glm::vec3(0.f, 0.f, -5.f));
     astronaut_object.set_scale(glm::vec3(0.25f, 0.25f, 0.25f));
-    astronaut_object.set_factors({1.f, 0.5f, 0.5f}, {1.f, 0.5f, 0.5f}, 100.0f);
+    astronaut_object.set_factors({0.7f, 0.7f, 0.7f}, {0.8f, 0.8f, 0.8f}, 100.0f);
+    // astronaut_object.set_factors({1.f, 0.5f, 0.5f}, {1.f, 0.5f, 0.5f}, 100.0f);
 
-    GameObject astronaut_edge_object("assets/models/astronaut.obj", glm::vec3(.0f, .0f, .0f));
+    GameObject astronaut_edge_object("assets/models/thwomp.obj", glm::vec3(.0f, .0f, .0f));
     astronaut_edge_object.set_scale(glm::vec3(0.26f, 0.26f, 0.26f));
     astronaut_edge_object.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
 
@@ -409,25 +410,25 @@ int main()
 
         switch (astronaut_chain.get_deterministic_current_state())
         {
-        case 0:                                                                                                // Happy
-            astronaut_object.interpolate_material_factors({0.8f, 0.8f, 0.2f}, {1.f, 1.f, 1.f}, 100.0f, 0.05f); // Bright and shiny materials
-            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(3.f, 3.f, 1.5f), 0.1f);              // Bright and warm color
+        case 0:                                                                                                   // Happy
+            astronaut_object.interpolate_material_factors({0.7f, 0.7f, 0.7f}, {0.8f, 0.8f, 0.8f}, 100.0f, 0.05f); // Slightly shiny stone
+            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(2.5f, 2.5f, 2.0f), 0.1f);               // Warm, bright light
             break;
-        case 1:                                                                                                  // Sad
-            astronaut_object.interpolate_material_factors({0.3f, 0.4f, 0.7f}, {0.5f, 0.5f, 0.8f}, 50.0f, 0.05f); // Darker and less reflective materials
-            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(0.5f, 0.5f, 2.f), 0.1f);               // Cooler, dimmer blue light
+        case 1:                                                                                                    // Sad
+            astronaut_object.interpolate_material_factors({0.5f, 0.5f, 0.55f}, {0.4f, 0.4f, 0.45f}, 30.0f, 0.05f); // Duller, slightly bluish stone
+            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(1.0f, 1.0f, 2.0f), 0.1f);                // Dimmer, cooler light
             break;
-        case 2:                                                                                                 // Angry
-            astronaut_object.interpolate_material_factors({0.9f, 0.2f, 0.2f}, {1.f, 0.3f, 0.3f}, 80.0f, 0.05f); // Vibrant and less reflective materials
-            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(3.f, 0.3f, 0.3f), 0.1f);              // Intense red to enhance the feeling of anger
+        case 2:                                                                                                  // Angry
+            astronaut_object.interpolate_material_factors({0.6f, 0.3f, 0.3f}, {0.6f, 0.3f, 0.3f}, 50.0f, 0.05f); // Darker, reddish stone
+            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(3.0f, 0.5f, 0.5f), 0.1f);              // Reddish, intense light
             break;
         case 3:                                                                                                  // Scared
-            astronaut_object.interpolate_material_factors({0.3f, 0.1f, 0.3f}, {0.4f, 0.2f, 0.7f}, 20.0f, 0.05f); // Darker violet materials
-            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(0.5f, 0.2f, 0.8f), 0.1f);              // Darker, purple light
+            astronaut_object.interpolate_material_factors({0.4f, 0.4f, 0.5f}, {0.5f, 0.5f, 0.6f}, 25.0f, 0.05f); // Darker, slightly purplish stone
+            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(1.5f, 1.5f, 2.5f), 0.1f);              // Dim, purple light
             break;
-        default:                                                                                               // Relaxed
-            astronaut_object.interpolate_material_factors({0.4f, 0.6f, 0.9f}, {0.8f, 1.f, 1.f}, 70.0f, 0.05f); // Calm and reflective materials
-            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(0.2f, 0.8f, 2.f), 0.1f);             // Soft blue-green
+        default:                                                                                                   // Relaxed
+            astronaut_object.interpolate_material_factors({0.6f, 0.65f, 0.7f}, {0.7f, 0.75f, 0.8f}, 70.0f, 0.05f); // Calm, slightly bluish stone
+            lights[1].intensity = glm::mix(lights[1].intensity, glm::vec3(1.0f, 2.0f, 2.5f), 0.1f);                // Soft, blue-green light
             break;
         }
 

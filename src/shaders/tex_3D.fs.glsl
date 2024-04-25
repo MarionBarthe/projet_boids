@@ -61,6 +61,7 @@ void main() {
         }
 
         vec3 lighting = blinn_phong_lighting(0, normal, v_position_vs) + blinn_phong_lighting(1, normal, v_position_vs); // Calculate lighting
+        lighting = clamp(lighting, vec3(0.1), vec3(1.0));
         f_frag_color = vec4(frag_color * lighting, 1.0);  // Apply lighting to the fragment color
     }
 
