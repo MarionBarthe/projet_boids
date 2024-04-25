@@ -34,7 +34,7 @@ void Boid::update(p6::Context* ctx, const std::vector<Boid>& boids, BoidVariable
     m_position += m_velocity;
 
     // gère les bords pour que les boids ne sortent pas du cube
-    float edge_offset = 0.5;
+    float edge_offset = 1.;
 
     if (m_position.x <= -variables.cube_length)
         m_position.x = variables.cube_length - edge_offset;

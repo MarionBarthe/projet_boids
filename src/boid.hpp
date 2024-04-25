@@ -9,6 +9,7 @@ struct BoidVariables {
     float separate         = 0.2;
     float align            = 0.5;
     float cohesion         = 0.5;
+    bool isLowPoly = true;
 
     void draw_Gui()
     {
@@ -16,6 +17,7 @@ struct BoidVariables {
         ImGui::SliderFloat("Cohesion", &cohesion, 0.0f, 1.f);
         ImGui::SliderFloat("Separate", &separate, 0.0f, 1.f);
         ImGui::SliderFloat("Radius of awareness", &radius_awareness, 0.0f, 10.f);
+        ImGui::Checkbox("Low Poly", &isLowPoly);
     }
 };
 class Boid {

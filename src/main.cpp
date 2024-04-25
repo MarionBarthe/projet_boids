@@ -301,16 +301,20 @@ int main()
     astronaut_edge_object.set_scale(glm::vec3(0.26f, 0.26f, 0.26f));
     astronaut_edge_object.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
 
-    GameObject star_object("assets/models/star.obj", generate_vivid_color());
-    star_object.set_position(glm::vec3(0.f, 0.f, -1.f));
-    star_object.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
+    // GameObject star_object("assets/models/star.obj", generate_vivid_color());
+    // star_object.set_position(glm::vec3(0.f, 0.f, -1.f));
+    // star_object.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
 
     GameObject star_boid("assets/models/star.obj", generate_vivid_color());
     star_boid.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
     star_boid.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 200.0f);
 
-    GameObject star_object_2("assets/models/star.obj", generate_vivid_color());
-    star_object_2.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
+    GameObject star_boid_low("assets/models/star_low.obj", generate_vivid_color());
+    star_boid_low.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
+    star_boid_low.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 200.0f);
+
+    // GameObject star_object_2("assets/models/star.obj", generate_vivid_color());
+    // star_object_2.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
 
     GameObject star_edge_object("assets/models/star.obj", glm::vec3(.0f, .0f, .0f));
     star_edge_object.set_scale(glm::vec3(0.011f, 0.011f, 0.011f));
@@ -401,11 +405,11 @@ int main()
         lightPosition.x = sin(time * lightMotionSpeed) * lightMotionRadius;
         lightPosition.z = cos(time * lightMotionSpeed) * lightMotionRadius;
 
-        star_object.set_position(lightPosition);
+        // star_object.set_position(lightPosition);
         lights[0].position = glm::vec3(view_matrix * glm::vec4(lightPosition, 1.0));
 
         astronaut_object.move_y(1.1f);
-        star_object_2.set_position(astronaut_object.get_position());
+        // star_object_2.set_position(astronaut_object.get_position());
         lights[1].position = glm::vec3(view_matrix * glm::vec4(astronaut_object.get_position(), 1.0));
         astronaut_object.move_y(-1.1f);
 
@@ -454,11 +458,11 @@ int main()
         astronaut_edge_object.set_position(astronaut_object.get_position());
         render_game_object(astronaut_edge_object, view_matrix, proj_matrix, boids_program);
 
-        star_edge_object.set_position(star_object.get_position());
-        render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
+        // star_edge_object.set_position(star_object.get_position());
+        // render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
 
-        star_edge_object.set_position(star_object_2.get_position());
-        render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
+        // star_edge_object.set_position(star_object_2.get_position());
+        // render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
         render_game_object(space_object, view_matrix, proj_matrix, boids_program);
 
         for (const auto& planet : planet_positions_and_textures)
@@ -469,13 +473,21 @@ int main()
 
         glCullFace(GL_BACK);
         render_game_object(astronaut_object, view_matrix, proj_matrix, boids_program);
-        render_game_object(star_object, view_matrix, proj_matrix, boids_program);
-        render_game_object(star_object_2, view_matrix, proj_matrix, boids_program);
+        // render_game_object(star_object, view_matrix, proj_matrix, boids_program);
+        // render_game_object(star_object_2, view_matrix, proj_matrix, boids_program);
 
         for (auto& b : boids)
         {
-            star_boid.set_position(b.get_position());
-            render_game_object(star_boid, view_matrix, proj_matrix, boids_program);
+            if (coeffs.isLowPoly)
+            {
+                star_boid_low.set_position(b.get_position());
+                render_game_object(star_boid_low, view_matrix, proj_matrix, boids_program);
+            }
+            else
+            {
+                star_boid.set_position(b.get_position());
+                render_game_object(star_boid, view_matrix, proj_matrix, boids_program);
+            }
 
             b.update(&ctx, boids, coeffs);
         }
@@ -524,7 +536,7 @@ int main()
 
         glDisable(GL_CULL_FACE);
 
-        render_game_object(star_object, view_matrix, proj_matrix, boids_program);
+        // render_game_object(star_object, view_matrix, proj_matrix, boids_program);
     };
 
     ctx.start();
