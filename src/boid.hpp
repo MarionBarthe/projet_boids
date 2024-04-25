@@ -5,8 +5,8 @@
 
 struct BoidVariables {
     float cube_length    = 10.4;
-    float radius_awareness = 5.;
-    float separate         = 0.2;
+    float radius_awareness = 3.;
+    float separate         = 0.5;
     float align            = 0.5;
     float cohesion         = 0.5;
     bool isLowPoly = true;
@@ -30,15 +30,15 @@ private:
     glm::vec3 separate(const std::vector<Boid>& boids, float radius_awareness);
 
 public:
-    glm::vec3 random_position(float range)
+    glm::vec3 random_position(float min, float max)
     {
         // return static_cast<float>(rand()) / RAND_MAX;
-        return {glm::linearRand(- range /2.f, range/2.f), glm::linearRand(- range /2.f, range/2.f), glm::linearRand( - range /2.f, range/2.f)};
+        return {glm::linearRand(min, max), glm::linearRand(min, max), glm::linearRand(min, max)};
     }
 
     Boid()
-        : m_position(random_position(4.f))
-        , m_velocity(glm::vec3(random_position(8.f))){};
+        : m_position(random_position(-2.f, 2.f))
+        , m_velocity(glm::vec3(random_position(-4.f, 4.f))){};
     void      update(p6::Context* ctx, const std::vector<Boid>& boids, BoidVariables variables);
     void      draw(p6::Context& ctx, float radius_awareness);
     glm::vec3 get_position() const

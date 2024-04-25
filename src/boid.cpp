@@ -8,7 +8,7 @@ static glm::vec3 limit(glm::vec3 force)
 {
     float norm = glm::length(force);
 
-    float max = 0.01f;
+    float max = 0.03f;
     // float min  = 0.01;
 
     if (norm > max)
@@ -34,35 +34,37 @@ void Boid::update(p6::Context* ctx, const std::vector<Boid>& boids, BoidVariable
     m_position += m_velocity;
 
     // gère les bords pour que les boids ne sortent pas du cube
-    float edge_offset = 1.;
+    float edge_offset = 2.;
 
-    if (m_position.x <= -variables.cube_length)
+    //  if (m_position.x <= -variables.cube_length + edge_offset || m_position.x >= variables.cube_length - edge_offset)
+    // {
+    //     m_velocity.x *= -1;
+    // }
+    // if (m_position.y <= -variables.cube_length + edge_offset || m_position.y >= variables.cube_length - edge_offset)
+    // {
+    //     m_velocity.y *= -1;
+    // }
+    // if (m_position.z <= -variables.cube_length + edge_offset || m_position.z >= variables.cube_length - edge_offset)
+    // {
+    //     m_velocity.z *= -1;
+    // }
+
+    if (m_position.x < -variables.cube_length)
         m_position.x = variables.cube_length - edge_offset;
-    else if (m_position.x >= variables.cube_length)
+     if (m_position.x > variables.cube_length)
         m_position.x = -(variables.cube_length - edge_offset);
 
-    if (m_position.y <= -variables.cube_length)
+    if (m_position.y < -variables.cube_length)
         m_position.y = variables.cube_length - edge_offset;
-    else if (m_position.y >= variables.cube_length)
+     if (m_position.y > variables.cube_length)
         m_position.y = -(variables.cube_length - edge_offset);
 
-    if (m_position.z <= -variables.cube_length)
+    if (m_position.z < -variables.cube_length)
         m_position.z = variables.cube_length - edge_offset;
-    else if (m_position.z >= variables.cube_length)
+     if (m_position.z > variables.cube_length)
         m_position.z = -(variables.cube_length - edge_offset);
 
-    if (m_position.x <= -variables.cube_length + edge_offset || m_position.x >= variables.cube_length - edge_offset)
-    {
-        m_velocity.x *= -1;
-    }
-    if (m_position.y <= -variables.cube_length + edge_offset || m_position.y >= variables.cube_length - edge_offset)
-    {
-        m_velocity.y *= -1;
-    }
-    if (m_position.z <= -variables.cube_length + edge_offset || m_position.z >= variables.cube_length - edge_offset)
-    {
-        m_velocity.z *= -1;
-    }
+   
 }
 
 void Boid::draw(p6::Context& ctx, float radius_awareness)
