@@ -23,6 +23,7 @@ struct BoidVariables {
 class Boid {
 private:
     glm::vec3 m_position;
+    // GameObject game_object;
     glm::vec3 m_velocity;
 
     glm::vec3 align(const std::vector<Boid>& boids, float radius_awareness);
@@ -37,7 +38,7 @@ public:
     }
 
     Boid()
-        : m_position(random_position(-2.f, 2.f))
+        : m_position(random_position(-2.f, 2.f)) //TODO utiliser fns de random_generator
         , m_velocity(glm::vec3(random_position(-4.f, 4.f))){};
     void      update(p6::Context* ctx, const std::vector<Boid>& boids, BoidVariables variables);
     void      draw(p6::Context& ctx, float radius_awareness);

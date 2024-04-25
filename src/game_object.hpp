@@ -48,9 +48,9 @@ public:
     void draw() const;
 
 private:
-    int data_size;
-    VAO vao;
-    VBO vbo_vertices;
+    int data_size; //3D
+    VAO vao; //3D
+    VBO vbo_vertices; //3D
 
     GLuint    texture_object;
     bool      use_texture; // Indicates whether to use a texture
@@ -65,7 +65,7 @@ private:
     glm::vec3 specular_factor;  // Specular reflectivity
     float     shininess_factor; // Shininess for specular highlight
 
-    void load_model(const std::string& model_path);
+    void load_model(const std::string& model_path); //3D
     void load_texture(const std::string& texture_path);
 
     void update_model_matrix();
