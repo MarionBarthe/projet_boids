@@ -18,7 +18,7 @@
 */
 
 #include "random_generator.hpp"
-
+#define M_PI       3.14159265358979323846
 // Calculate the binomial coefficient, (n k), representing the number of ways to choose k items from a set of n distinct items
 unsigned long long binomial_coefficient(int n, int k)
 {

@@ -1,4 +1,5 @@
 #include "markov_chain.hpp"
+#include <string>
 
 MarkovChain::MarkovChain(const std::vector<std::vector<double>>& transition_matrix, const std::vector<double>& initial_state)
     : transition_matrix(transition_matrix), current_state(initial_state), state_counts(initial_state.size() + 1, 0.0)

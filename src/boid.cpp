@@ -2,6 +2,7 @@
 #include <iostream>
 #include "cmath"
 #include "glm/ext/quaternion_geometric.hpp"
+#include "glm/gtx/norm.hpp"
 
 static glm::vec3 limit(glm::vec3 force)
 {
@@ -19,17 +20,8 @@ static glm::vec3 limit(glm::vec3 force)
     // }
     return force;
 }
-static void edge_control(float position, float edge_limit)
-{
-    float edge_offset = 0.05;
 
-    if (position <= -edge_limit)
-        position = edge_limit - edge_offset;
-    else if (position >= edge_limit)
-        position = -(edge_limit - edge_offset);
-}
-
-void Boid::update(p6::Context* ctx, const std::vector<Boid>& boids, Boid_variables variables)
+void Boid::update(p6::Context* ctx, const std::vector<Boid>& boids, BoidVariables variables)
 {
     glm::vec3 acceleration{0.f};
 
@@ -41,11 +33,37 @@ void Boid::update(p6::Context* ctx, const std::vector<Boid>& boids, Boid_variabl
     m_velocity = limit(m_velocity);
     m_position += m_velocity;
 
-    // gère les bords pour que les boids ne sortent pas de la fenetre
-    edge_control(m_position.x, variables.cube_length);
-    edge_control(m_position.y, variables.cube_length);
-    edge_control(m_position.z, variables.cube_length);
-};
+    // gère les bords pour que les boids ne sortent pas du cube
+    float edge_offset = 0.5;
+
+    if (m_position.x <= -variables.cube_length)
+        m_position.x = variables.cube_length - edge_offset;
+    else if (m_position.x >= variables.cube_length)
+        m_position.x = -(variables.cube_length - edge_offset);
+
+    if (m_position.y <= -variables.cube_length)
+        m_position.y = variables.cube_length - edge_offset;
+    else if (m_position.y >= variables.cube_length)
+        m_position.y = -(variables.cube_length - edge_offset);
+
+    if (m_position.z <= -variables.cube_length)
+        m_position.z = variables.cube_length - edge_offset;
+    else if (m_position.z >= variables.cube_length)
+        m_position.z = -(variables.cube_length - edge_offset);
+
+    if (m_position.x <= -variables.cube_length + edge_offset || m_position.x >= variables.cube_length - edge_offset)
+    {
+        m_velocity.x *= -1;
+    }
+    if (m_position.y <= -variables.cube_length + edge_offset || m_position.y >= variables.cube_length - edge_offset)
+    {
+        m_velocity.y *= -1;
+    }
+    if (m_position.z <= -variables.cube_length + edge_offset || m_position.z >= variables.cube_length - edge_offset)
+    {
+        m_velocity.z *= -1;
+    }
+}
 
 void Boid::draw(p6::Context& ctx, float radius_awareness)
 {
@@ -65,7 +83,7 @@ glm::vec3 Boid::align(const std::vector<Boid>& boids, float radius_awareness)
 
     for (const auto& b : boids)
     {
-        if (glm::distance(b.m_position, this->m_position) < radius_awareness)
+        if (sqrt(glm::distance2(b.m_position, this->m_position)) < radius_awareness)
         {
             target += b.m_velocity;
             count++;
@@ -86,7 +104,7 @@ glm::vec3 Boid::separate(const std::vector<Boid>& boids, float radius_awareness)
     int count = 0;
     for (const Boid& other : boids)
     {
-        float distance = glm::distance(m_position, other.m_position);
+        float distance = sqrt(glm::distance2(m_position, other.m_position));
         if (&other != this && distance < radius_awareness)
         {
             glm::vec3 diff = m_position - other.m_position;
@@ -111,7 +129,7 @@ glm::vec3 Boid::cohesion(const std::vector<Boid>& boids, float radius_awareness)
     glm::vec3 target(0.f);
     for (const auto& b : boids)
     {
-        if ((glm::distance(m_position, b.m_position) < radius_awareness))
+        if (sqrt(glm::distance2(m_position, b.m_position)) < radius_awareness)
         {
             target += b.m_position;
             count++;
