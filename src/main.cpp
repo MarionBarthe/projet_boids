@@ -8,9 +8,8 @@
 #include "glimac/trackball_camera.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/fwd.hpp"
-#include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
-#include "model_loader.hpp"
+// #include "model_loader.hpp"
 #include "p6/p6.h"
 #include "texture_manager.hpp"
 #include "vao.hpp"
@@ -19,52 +18,8 @@
 #include "doctest/doctest.h"
 #include "markov_chain.hpp"
 #include "random_generator.hpp"
+#include "program.hpp"
 
-struct BoidsProgram { //TODO mettre dans une classe 
-    p6::Shader program;
-
-    GLint u_MVP_matrix;
-    GLint u_MV_matrix;
-    GLint u_normal_matrix;
-
-    GLint u_texture;
-    GLint u_color;
-    GLint u_use_color;
-
-    GLint u_kd;
-    GLint u_ks;
-    GLint u_shininess;
-
-    GLint u_light_pos_vs_0;
-    GLint u_light_intensity_0;
-    GLint u_light_pos_vs_1;
-    GLint u_light_intensity_1;
-
-    double next_event_time = 0.0;
-    const double lambda          = 1.0 / 3; // Every 3 seconds
-
-    BoidsProgram()
-        : program{p6::load_shader(
-            "../src/shaders/3D.vs.glsl",
-            "../src/shaders/tex_3D.fs.glsl"
-        )}
-        , u_MVP_matrix(glGetUniformLocation(program.id(), "u_MVP_matrix"))
-        , u_MV_matrix(glGetUniformLocation(program.id(), "u_MV_matrix"))
-        , u_normal_matrix(glGetUniformLocation(program.id(), "u_normal_matrix"))
-        , u_texture(glGetUniformLocation(program.id(), "u_texture"))
-        , u_color(glGetUniformLocation(program.id(), "u_color"))
-        , u_use_color(glGetUniformLocation(program.id(), "u_use_color"))
-        , u_kd(glGetUniformLocation(program.id(), "u_kd"))
-        , u_ks(glGetUniformLocation(program.id(), "u_ks"))
-        , u_shininess(glGetUniformLocation(program.id(), "u_shininess"))
-        , u_light_pos_vs_0(glGetUniformLocation(program.id(), "u_lights[0].position"))
-        , u_light_intensity_0(glGetUniformLocation(program.id(), "u_lights[0].intensity"))
-        , u_light_pos_vs_1(glGetUniformLocation(program.id(), "u_lights[1].position"))
-        , u_light_intensity_1(glGetUniformLocation(program.id(), "u_lights[1].intensity"))
-
-    {
-    }
-};
 
 struct Light {
     glm::vec3 position;  // Light position in view space
@@ -83,17 +38,20 @@ void change_astronaut_temperament(MarkovChain& chain) //TODO arpenteur
     }
 }
 
-void time_events(BoidsProgram& program, MarkovChain& chain, p6::Context& ctx) //TODO Boidsprogram?
+int time_events(int next_event_time, MarkovChain& chain, p6::Context& ctx) 
 {
-    double current_time = ctx.time();
-    if (current_time >= program.next_event_time)
+    const double current_time = ctx.time();
+    const double lambda          = 1.0 / 3; // Every 3 seconds
+
+    if (current_time >= next_event_time)
     {
         change_astronaut_temperament(chain);
 
-        double delay            = exponential_distribution(program.lambda);
-        program.next_event_time = current_time + delay;
+        double delay            = exponential_distribution(lambda);
+        next_event_time = current_time + delay;
         std::cout << "Next event in " << delay << " seconds." << std::endl;
     }
+    return next_event_time;
 }
 
 void handle_camera_input(p6::Context& ctx, TrackballCamera& camera, float& last_x, float& last_y)
@@ -225,38 +183,6 @@ glm::vec3 generate_vivid_color() //TODO couleur
     return (rgb);
 }
 
-void render_game_object(GameObject& object, const glm::mat4& view_matrix, const glm::mat4& proj_matrix, BoidsProgram& program) //TODO game object
-{
-    glm::mat4 model_matrix  = object.get_model_matrix();
-    glm::mat4 MV_matrix     = view_matrix * model_matrix;
-    glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(view_matrix * model_matrix)));
-    glm::mat4 MVP_matrix    = proj_matrix * view_matrix * model_matrix;
-
-    program.program.use();
-
-    glUniformMatrix4fv(program.u_MVP_matrix, 1, GL_FALSE, glm::value_ptr(MVP_matrix));
-    glUniformMatrix4fv(program.u_MV_matrix, 1, GL_FALSE, glm::value_ptr(MV_matrix));
-    glUniformMatrix3fv(program.u_normal_matrix, 1, GL_FALSE, glm::value_ptr(normal_matrix));
-
-    glUniform3fv(program.u_kd, 1, glm::value_ptr(object.get_diffuse_factor()));
-    glUniform3fv(program.u_ks, 1, glm::value_ptr(object.get_specular_factor()));
-    glUniform1f(program.u_shininess, object.get_shininess_factor());
-
-    if (object.get_use_texture())
-    {
-        glUniform1i(program.u_texture, 0); // Bind texture unit 0
-        glBindTexture(GL_TEXTURE_2D, object.get_texture());
-        glUniform1i(program.u_use_color, 0); // Signal to use texture
-    }
-    else
-    {
-        glUniform1i(program.u_use_color, 1);                                       // Signal to use color
-        glUniform3fv(program.u_color, 1, glm::value_ptr(object.get_base_color())); // Send the color to the shader
-    }
-
-    object.draw();
-}
-
 int main()
 {
     auto ctx = p6::Context{{1280, 720, "Space Boids - Barthe & Duval"}};
@@ -269,8 +195,11 @@ int main()
     TrackballCamera   camera;
     BoidVariables     coeffs;
     std::vector<Boid> boids(80);
-    BoidsProgram      boids_program{};
+    Program      boids_program{};
     Light             lights[2];
+    
+    double       next_event_time = 0.0;
+
 
     std::vector<glm::vec3> colors;
     colors.reserve(80);
@@ -390,7 +319,7 @@ int main()
     lights[0].intensity         = glm::vec3(2.0f, 2.0f, 2.0f);
 
     ctx.update = [&]() {
-        time_events(boids_program, astronaut_chain, ctx);
+        next_event_time=time_events(next_event_time, astronaut_chain, ctx);
 
         ImGui::Begin("Boids command panel");
         ImGui::Text("Play with the parameters of the flock!");
@@ -444,7 +373,7 @@ int main()
             break;
         }
 
-        boids_program.program.use();
+        boids_program.use();
         glUniform3fv(boids_program.u_light_pos_vs_0, 1, glm::value_ptr(lights[0].position));
         glUniform3fv(boids_program.u_light_intensity_0, 1, glm::value_ptr(lights[0].intensity));
         glUniform3fv(boids_program.u_light_pos_vs_1, 1, glm::value_ptr(lights[1].position));
@@ -459,27 +388,27 @@ int main()
         for (auto& b : boids)
         {
             star_edge_object.set_position(b.get_position());
-            render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
+            boids_program.render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
         }
 
         astronaut_edge_object.set_position(astronaut_object.get_position());
-        render_game_object(astronaut_edge_object, view_matrix, proj_matrix, boids_program);
+        boids_program.render_game_object(astronaut_edge_object, view_matrix, proj_matrix, boids_program);
 
         // star_edge_object.set_position(star_object.get_position());
         // render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
 
         // star_edge_object.set_position(star_object_2.get_position());
         // render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
-        render_game_object(space_object, view_matrix, proj_matrix, boids_program);
+        boids_program.render_game_object(space_object, view_matrix, proj_matrix, boids_program);
 
         for (const auto& planet : planet_positions_and_textures)
         {
             planet_edge_object.set_position({planet[0], planet[1], planet[2]});
-            render_game_object(planet_edge_object, view_matrix, proj_matrix, boids_program);
+            boids_program.render_game_object(planet_edge_object, view_matrix, proj_matrix, boids_program);
         }
 
         glCullFace(GL_BACK);
-        render_game_object(astronaut_object, view_matrix, proj_matrix, boids_program);
+        boids_program.render_game_object(astronaut_object, view_matrix, proj_matrix, boids_program);
         // render_game_object(star_object, view_matrix, proj_matrix, boids_program);
         // render_game_object(star_object_2, view_matrix, proj_matrix, boids_program);
 
@@ -489,13 +418,13 @@ int main()
             {
                 star_boid_low.change_color(colors[colors_i]);
                 star_boid_low.set_position(b.get_position());
-                render_game_object(star_boid_low, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(star_boid_low, view_matrix, proj_matrix, boids_program);
             }
             else
             {
                 star_boid.change_color(colors[colors_i]);
                 star_boid.set_position(b.get_position());
-                render_game_object(star_boid, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(star_boid, view_matrix, proj_matrix, boids_program);
             }
 
             colors_i++;
@@ -510,37 +439,37 @@ int main()
             case 0:
                 jupiter_object.set_position({planet[0], planet[1], planet[2]});
                 jupiter_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                render_game_object(jupiter_object, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(jupiter_object, view_matrix, proj_matrix, boids_program);
                 break;
             case 1:
                 mars_object.set_position({planet[0], planet[1], planet[2]});
                 mars_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                render_game_object(mars_object, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(mars_object, view_matrix, proj_matrix, boids_program);
                 break;
             case 2:
                 neptune_object.set_position({planet[0], planet[1], planet[2]});
                 neptune_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                render_game_object(neptune_object, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(neptune_object, view_matrix, proj_matrix, boids_program);
                 break;
             case 3:
                 venus_atmosphere_object.set_position({planet[0], planet[1], planet[2]});
                 venus_atmosphere_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                render_game_object(venus_atmosphere_object, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(venus_atmosphere_object, view_matrix, proj_matrix, boids_program);
                 break;
             case 4:
                 venus_surface_object.set_position({planet[0], planet[1], planet[2]});
                 venus_surface_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                render_game_object(venus_surface_object, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(venus_surface_object, view_matrix, proj_matrix, boids_program);
                 break;
             case 5:
                 mercury_object.set_position({planet[0], planet[1], planet[2]});
                 mercury_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                render_game_object(mercury_object, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(mercury_object, view_matrix, proj_matrix, boids_program);
                 break;
             default:
                 uranus_object.set_position({planet[0], planet[1], planet[2]});
                 uranus_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                render_game_object(uranus_object, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(uranus_object, view_matrix, proj_matrix, boids_program);
                 break;
             }
         }
