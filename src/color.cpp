@@ -1,6 +1,7 @@
 #include "color.hpp"
+#include "random_generator.hpp"
 
-glm::vec3 hsv_to_rgb(float h, float s, float v)
+Color hsv_to_rgb(float h, float s, float v)
 {
     glm::vec3 rgb;
     int       i = static_cast<int>(h * 6);
@@ -22,7 +23,7 @@ glm::vec3 hsv_to_rgb(float h, float s, float v)
     return rgb;
 }
 
-glm::vec3 generate_vivid_color() // TODO couleur
+Color generate_vivid_color()
 {
     float h = static_cast<float>(discrete_uniform_distribution(0, 360)) / 360.0f; // Hue value between 0 and 1
     float s = 0.7f;                                                               // High saturation for vivid colors

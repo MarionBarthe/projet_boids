@@ -94,15 +94,6 @@ int main()
     
     double       next_event_time = 0.0;
 
-
-    std::vector<glm::vec3> colors;
-    colors.reserve(80);
-    for (int i = 0; i < 80; ++i)
-    {
-        colors.push_back(generate_vivid_color());
-    }
-    int colors_i = 0;
-
     GameObject astronaut_object("assets/models/thwomp.obj", "assets/textures/thwomp_texture.jpg");
     if (bernoulli_distribution(0.1))
     {
@@ -240,27 +231,27 @@ int main()
         for (auto& b : boids)
         {
             star_edge_object.set_position(b.get_position());
-            boids_program.render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
+            boids_program.render_game_object(star_edge_object, view_matrix, proj_matrix);
         }
 
         astronaut_edge_object.set_position(astronaut_object.get_position());
-        boids_program.render_game_object(astronaut_edge_object, view_matrix, proj_matrix, boids_program);
+        boids_program.render_game_object(astronaut_edge_object, view_matrix, proj_matrix);
 
         // star_edge_object.set_position(star_object.get_position());
         // render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
 
         // star_edge_object.set_position(star_object_2.get_position());
         // render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
-        boids_program.render_game_object(space_object, view_matrix, proj_matrix, boids_program);
+        boids_program.render_game_object(space_object, view_matrix, proj_matrix);
 
         for (const auto& planet : planet_positions_and_textures)
         {
             planet_edge_object.set_position({planet[0], planet[1], planet[2]});
-            boids_program.render_game_object(planet_edge_object, view_matrix, proj_matrix, boids_program);
+            boids_program.render_game_object(planet_edge_object, view_matrix, proj_matrix);
         }
 
         glCullFace(GL_BACK);
-        boids_program.render_game_object(astronaut_object, view_matrix, proj_matrix, boids_program);
+        boids_program.render_game_object(astronaut_object, view_matrix, proj_matrix);
         // render_game_object(star_object, view_matrix, proj_matrix, boids_program);
         // render_game_object(star_object_2, view_matrix, proj_matrix, boids_program);
 
@@ -268,21 +259,19 @@ int main()
         {
             if (coeffs.isLowPoly)
             {
-                star_boid_low.change_color(colors[colors_i]);
+                star_boid_low.change_color(b.get_color());
                 star_boid_low.set_position(b.get_position());
-                boids_program.render_game_object(star_boid_low, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(star_boid_low, view_matrix, proj_matrix);
             }
             else
             {
-                star_boid.change_color(colors[colors_i]);
+                star_boid.change_color(b.get_color());
                 star_boid.set_position(b.get_position());
-                boids_program.render_game_object(star_boid, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(star_boid, view_matrix, proj_matrix);
             }
 
-            colors_i++;
             b.update(&ctx, boids, coeffs);
         }
-        colors_i = 0;
 
         for (const auto& planet : planet_positions_and_textures) // TODO dans classe planete
         {
@@ -291,37 +280,37 @@ int main()
             case 0:
                 jupiter_object.set_position({planet[0], planet[1], planet[2]});
                 jupiter_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                boids_program.render_game_object(jupiter_object, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(jupiter_object, view_matrix, proj_matrix);
                 break;
             case 1:
                 mars_object.set_position({planet[0], planet[1], planet[2]});
                 mars_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                boids_program.render_game_object(mars_object, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(mars_object, view_matrix, proj_matrix);
                 break;
             case 2:
                 neptune_object.set_position({planet[0], planet[1], planet[2]});
                 neptune_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                boids_program.render_game_object(neptune_object, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(neptune_object, view_matrix, proj_matrix);
                 break;
             case 3:
                 venus_atmosphere_object.set_position({planet[0], planet[1], planet[2]});
                 venus_atmosphere_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                boids_program.render_game_object(venus_atmosphere_object, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(venus_atmosphere_object, view_matrix, proj_matrix);
                 break;
             case 4:
                 venus_surface_object.set_position({planet[0], planet[1], planet[2]});
                 venus_surface_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                boids_program.render_game_object(venus_surface_object, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(venus_surface_object, view_matrix, proj_matrix);
                 break;
             case 5:
                 mercury_object.set_position({planet[0], planet[1], planet[2]});
                 mercury_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                boids_program.render_game_object(mercury_object, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(mercury_object, view_matrix, proj_matrix);
                 break;
             default:
                 uranus_object.set_position({planet[0], planet[1], planet[2]});
                 uranus_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                boids_program.render_game_object(uranus_object, view_matrix, proj_matrix, boids_program);
+                boids_program.render_game_object(uranus_object, view_matrix, proj_matrix);
                 break;
             }
         }

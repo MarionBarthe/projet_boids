@@ -7,18 +7,21 @@
 static glm::vec3 limit(glm::vec3 force)
 {
     float norm = glm::length(force);
-
-    float max = 0.03f;
-    // float min  = 0.01;
-
+    float max  = 0.03f;
     if (norm > max)
     {
         force *= max / norm;
     }
-    // else if (size<min){
-
-    // }
     return force;
+}
+
+float manage_edge_collision(float position, float edge, float edge_offset)
+{
+    if (position < -edge)
+        position = edge - edge_offset;
+    if (position > edge)
+        position = -(edge - edge_offset);
+    return position;
 }
 
 void Boid::update(p6::Context* ctx, const std::vector<Boid>& boids, BoidVariables variables)
@@ -33,49 +36,11 @@ void Boid::update(p6::Context* ctx, const std::vector<Boid>& boids, BoidVariable
     m_velocity = limit(m_velocity);
     m_position += m_velocity;
 
-    // gère les bords pour que les boids ne sortent pas du cube
+    // to keep the boids inside the cube
     float edge_offset = 4.;
-
-    //  if (m_position.x <= -variables.cube_length + edge_offset || m_position.x >= variables.cube_length - edge_offset)
-    // {
-    //     m_velocity.x *= -1;
-    // }
-    // if (m_position.y <= -variables.cube_length + edge_offset || m_position.y >= variables.cube_length - edge_offset)
-    // {
-    //     m_velocity.y *= -1;
-    // }
-    // if (m_position.z <= -variables.cube_length + edge_offset || m_position.z >= variables.cube_length - edge_offset)
-    // {
-    //     m_velocity.z *= -1;
-    // }
-
-    if (m_position.x < -variables.cube_length)
-        m_position.x = variables.cube_length - edge_offset;
-     if (m_position.x > variables.cube_length)
-        m_position.x = -(variables.cube_length - edge_offset);
-
-    if (m_position.y < -variables.cube_length)
-        m_position.y = variables.cube_length - edge_offset;
-     if (m_position.y > variables.cube_length)
-        m_position.y = -(variables.cube_length - edge_offset);
-
-    if (m_position.z < -variables.cube_length)
-        m_position.z = variables.cube_length - edge_offset;
-     if (m_position.z > variables.cube_length)
-        m_position.z = -(variables.cube_length - edge_offset);
-
-   
-}
-
-void Boid::draw(p6::Context& ctx, float radius_awareness)
-{
-    ctx.stroke_weight = 0.01f;
-    ctx.use_fill      = true;
-    ctx.fill          = {p6::NamedColor::OrangeRed};
-    ctx.circle(p6::Center{m_position}, p6::Radius{0.04});
-    ctx.use_fill = false;
-    ctx.stroke   = {1., 1., 1., 0.4};
-    ctx.circle(p6::Center{m_position}, p6::Radius{radius_awareness});
+    manage_edge_collision(m_position.x, variables.cube_length, edge_offset);
+    manage_edge_collision(m_position.y, variables.cube_length, edge_offset);
+    manage_edge_collision(m_position.z, variables.cube_length, edge_offset);
 }
 
 glm::vec3 Boid::align(const std::vector<Boid>& boids, float radius_awareness)

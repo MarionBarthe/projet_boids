@@ -10,16 +10,16 @@ private:
     Model     m_3D_model;
     GLuint    m_texture_object;
     bool      m_use_texture; // Indicates whether to use a texture
-    glm::vec3 base_color;    // Base color if no texture is used
+    glm::vec3 m_base_color;    // Base color if no texture is used
 
-    glm::vec3 position;
-    glm::vec3 rotation;
-    glm::vec3 scale;
-    glm::mat4 model_matrix; // Transformation matrix of the object
+    glm::vec3 m_position;
+    glm::vec3 m_rotation;
+    glm::vec3 m_scale;
+    glm::mat4 m_model_matrix; // Transformation matrix of the object
 
-    glm::vec3 diffuse_factor;   // Diffuse reflectivity
-    glm::vec3 specular_factor;  // Specular reflectivity
-    float     shininess_factor; // Shininess for specular highlight
+    glm::vec3 m_diffuse_factor;   // Diffuse reflectivity
+    glm::vec3 m_specular_factor;  // Specular reflectivity
+    float     m_shininess_factor; // Shininess for specular highlight
 
 public:
     GameObject(const std::string& model_path, const std::string& texture_path);
@@ -38,18 +38,18 @@ public:
 
     void set_factors(const glm::vec3& new_diffuse, const glm::vec3& new_specular, float new_shininess);
 
-    glm::vec3 get_base_color() const { return base_color; }
+    glm::vec3 get_base_color() const { return m_base_color; }
     GLuint    get_texture() const { return m_texture_object; }
     bool      get_use_texture() const { return m_use_texture; }
 
-    glm::vec3 get_position() const { return position; }
-    glm::vec3 get_rotation() const { return rotation; }
-    glm::vec3 get_scale() const { return scale; }
-    glm::mat4 get_model_matrix() const { return model_matrix; }
+    glm::vec3 get_position() const { return m_position; }
+    glm::vec3 get_rotation() const { return m_rotation; }
+    glm::vec3 get_scale() const { return m_scale; }
+    glm::mat4 get_model_matrix() const { return m_model_matrix; }
 
-    glm::vec3 get_diffuse_factor() const { return diffuse_factor; }
-    glm::vec3 get_specular_factor() const { return specular_factor; }
-    float     get_shininess_factor() const { return shininess_factor; }
+    glm::vec3 get_diffuse_factor() const { return m_diffuse_factor; }
+    glm::vec3 get_specular_factor() const { return m_specular_factor; }
+    float     get_shininess_factor() const { return m_shininess_factor; }
 
     void load_texture(const std::string& texture_path);
     void update_model_matrix();

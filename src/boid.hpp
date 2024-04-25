@@ -1,15 +1,16 @@
 #pragma once
 
-#include "glm/gtc/random.hpp"
+#include "color.hpp"
 #include "p6/p6.h"
+#include "random_generator.hpp"
 
 struct BoidVariables {
-    float cube_length    = 10.4;
+    float cube_length      = 10.4;
     float radius_awareness = 3.;
     float separate         = 0.5;
     float align            = 0.5;
     float cohesion         = 0.5;
-    bool isLowPoly = true;
+    bool  isLowPoly        = true;
 
     void draw_Gui()
     {
@@ -23,27 +24,20 @@ struct BoidVariables {
 class Boid {
 private:
     glm::vec3 m_position;
-    // GameObject game_object;
     glm::vec3 m_velocity;
+    Color     m_color;
 
+public:
+    Boid()
+        : m_position(static_cast<float>(uniform_distribution(-2., 2.)))
+        , m_velocity(static_cast<float>(uniform_distribution(-4., 4.)))
+        , m_color(generate_vivid_color()){};
+
+    glm::vec3 get_position() const { return m_position; };
+    Color     get_color() const { return m_color; }
+
+    void      update(p6::Context* ctx, const std::vector<Boid>& boids, BoidVariables variables);
     glm::vec3 align(const std::vector<Boid>& boids, float radius_awareness);
     glm::vec3 cohesion(const std::vector<Boid>& boids, float radius_awareness);
     glm::vec3 separate(const std::vector<Boid>& boids, float radius_awareness);
-
-public:
-    glm::vec3 random_position(float min, float max)
-    {
-        // return static_cast<float>(rand()) / RAND_MAX;
-        return {glm::linearRand(min, max), glm::linearRand(min, max), glm::linearRand(min, max)};
-    }
-
-    Boid()
-        : m_position(random_position(-2.f, 2.f)) //TODO utiliser fns de random_generator
-        , m_velocity(glm::vec3(random_position(-4.f, 4.f))){};
-    void      update(p6::Context* ctx, const std::vector<Boid>& boids, BoidVariables variables);
-    void      draw(p6::Context& ctx, float radius_awareness);
-    glm::vec3 get_position() const
-    {
-        return m_position;
-    };
 };
