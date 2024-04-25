@@ -18,26 +18,25 @@
 #include "color.hpp"
 #include "doctest/doctest.h"
 #include "markov_chain.hpp"
+#include "program.hpp"
 #include "random_generator.hpp"
 #include "surveyor.hpp"
-#include "program.hpp"
-
 
 struct Light {
     glm::vec3 position;  // Light position in view space
     glm::vec3 intensity; // Light intensity
 };
 
-int time_events(int next_event_time, Surveyor& chain, p6::Context& ctx) 
+int time_events(int next_event_time, Surveyor& chain, p6::Context& ctx)
 {
     const double current_time = ctx.time();
-    const double lambda          = 1.0 / 3; // Every 3 seconds
+    const double lambda       = 1.0 / 3; // Every 3 seconds
 
     if (current_time >= next_event_time)
     {
         chain.next_feeling();
 
-        double delay            = exponential_distribution(lambda);
+        double delay    = exponential_distribution(lambda);
         next_event_time = current_time + delay;
         std::cout << "Next event in " << delay << " seconds." << std::endl;
     }
@@ -76,7 +75,6 @@ void handle_camera_input(p6::Context& ctx, TrackballCamera& camera, float& last_
     };
 }
 
-
 int main()
 {
     auto ctx = p6::Context{{1280, 720, "Space Boids - Barthe & Duval"}};
@@ -89,15 +87,15 @@ int main()
     TrackballCamera   camera;
     BoidVariables     coeffs;
     std::vector<Boid> boids(80);
-    Program      boids_program{};
+    Program           boids_program{};
     Light             lights[2];
-    
-    double       next_event_time = 0.0;
 
-    GameObject astronaut_object("assets/models/thwomp.obj", "assets/textures/thwomp_texture.jpg");
+    double next_event_time = 0.0;
+
+    GameObject thwomp_object("assets/models/thwomp.obj", "assets/textures/thwomp_texture.jpg");
     if (bernoulli_distribution(0.1))
     {
-        astronaut_object.change_texture("assets/textures/thwomp_shiny_texture.jpg");
+        thwomp_object.change_texture("assets/textures/thwomp_shiny_texture.jpg");
     }
 
     std::vector<std::vector<double>> transition_matrix = {
@@ -109,20 +107,15 @@ int main()
     };
     std::vector<double> initial_state = {0.2, 0.1, 0.1, 0.1, 0.5};
 
-    Surveyor player(&astronaut_object, transition_matrix, initial_state);
+    Surveyor player(&thwomp_object, transition_matrix, initial_state);
 
-    astronaut_object.set_position(glm::vec3(0.f, 0.f, -5.f));
-    astronaut_object.set_scale(glm::vec3(0.25f, 0.25f, 0.25f));
-    astronaut_object.set_factors({0.7f, 0.7f, 0.7f}, {0.8f, 0.8f, 0.8f}, 100.0f);
-    // astronaut_object.set_factors({1.f, 0.5f, 0.5f}, {1.f, 0.5f, 0.5f}, 100.0f);
+    thwomp_object.set_position(glm::vec3(0.f, 0.f, -5.f));
+    thwomp_object.set_scale(glm::vec3(0.25f, 0.25f, 0.25f));
+    thwomp_object.set_factors({0.7f, 0.7f, 0.7f}, {0.8f, 0.8f, 0.8f}, 100.0f);
 
-    GameObject astronaut_edge_object("assets/models/thwomp.obj", glm::vec3(.0f, .0f, .0f));
-    astronaut_edge_object.set_scale(glm::vec3(0.26f, 0.26f, 0.26f));
-    astronaut_edge_object.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
-
-    // GameObject star_object("assets/models/star.obj", generate_vivid_color());
-    // star_object.set_position(glm::vec3(0.f, 0.f, -1.f));
-    // star_object.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
+    GameObject thwomp_edge_object("assets/models/thwomp.obj", glm::vec3(.0f, .0f, .0f));
+    thwomp_edge_object.set_scale(glm::vec3(0.26f, 0.26f, 0.26f));
+    thwomp_edge_object.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
 
     GameObject star_boid("assets/models/star.obj", generate_vivid_color());
     star_boid.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
@@ -131,9 +124,6 @@ int main()
     GameObject star_boid_low("assets/models/star_low.obj", generate_vivid_color());
     star_boid_low.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
     star_boid_low.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 200.0f);
-
-    // GameObject star_object_2("assets/models/star.obj", generate_vivid_color());
-    // star_object_2.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
 
     GameObject star_edge_object("assets/models/star.obj", glm::vec3(.0f, .0f, .0f));
     star_edge_object.set_scale(glm::vec3(0.011f, 0.011f, 0.011f));
@@ -154,13 +144,11 @@ int main()
     planet_edge_object.set_scale({1.01f, 1.1f, 1.01f});
     planet_edge_object.set_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
 
-    int number_of_planets = binomial_distribution_cdf(12, 0.5);
-    std::cout << "" << number_of_planets << std::endl;
+    int                              number_of_planets = binomial_distribution_cdf(12, 0.5);
     std::vector<std::vector<double>> planet_positions_and_textures(number_of_planets);
 
     float scale_cube = 180 * 0.1;
-
-    for (int i = 0; i < number_of_planets; i++) // TODO planete
+    for (int i = 0; i < number_of_planets; i++)
     {
         double x = (beta_distribution(1.0, 1.0) - 0.5) * scale_cube;
         double y = (beta_distribution(1.0, 1.0) - 0.5) * scale_cube;
@@ -170,7 +158,6 @@ int main()
 
         std::vector<double> rotation_random;
         normal_distribution(rotation_random, 0, 0.5);
-
         planet_positions_and_textures[i] = std::vector<double>{x, y, z, static_cast<double>(texture_index), rotation_random[0] * 10, rotation_random[1] * 10};
     }
 
@@ -183,7 +170,7 @@ int main()
     lights[0].intensity         = glm::vec3(2.0f, 2.0f, 2.0f);
 
     ctx.update = [&]() {
-        next_event_time=time_events(next_event_time, player, ctx);
+        next_event_time = time_events(next_event_time, player, ctx);
 
         ImGui::Begin("Boids command panel");
         ImGui::Text("Play with the parameters of the flock!");
@@ -194,7 +181,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         player.move_surveyor_with_wiggle(ctx);
-        camera.set_center(astronaut_object.get_position());
+        camera.set_center(thwomp_object.get_position());
         handle_camera_input(ctx, camera, last_x, last_y);
 
         glm::mat4 view_matrix = camera.get_view_matrix();
@@ -205,13 +192,11 @@ int main()
         lightPosition.x = sin(time * lightMotionSpeed) * lightMotionRadius;
         lightPosition.z = cos(time * lightMotionSpeed) * lightMotionRadius;
 
-        // star_object.set_position(lightPosition);
         lights[0].position = glm::vec3(view_matrix * glm::vec4(lightPosition, 1.0));
 
-        astronaut_object.move_y(1.1f);
-        // star_object_2.set_position(astronaut_object.get_position());
-        lights[1].position = glm::vec3(view_matrix * glm::vec4(astronaut_object.get_position(), 1.0));
-        astronaut_object.move_y(-1.1f);
+        thwomp_object.move_y(1.1f);
+        lights[1].position = glm::vec3(view_matrix * glm::vec4(thwomp_object.get_position(), 1.0));
+        thwomp_object.move_y(-1.1f);
 
         player.adapt_feeling();
         lights[1].intensity = player.get_light_intensity();
@@ -222,9 +207,6 @@ int main()
         glUniform3fv(boids_program.u_light_pos_vs_1, 1, glm::value_ptr(lights[1].position));
         glUniform3fv(boids_program.u_light_intensity_1, 1, glm::value_ptr(lights[1].intensity));
 
-        astronaut_edge_object.set_position(astronaut_object.get_position());
-        astronaut_edge_object.set_rotation(astronaut_object.get_rotation());
-
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
 
@@ -234,14 +216,10 @@ int main()
             boids_program.render_game_object(star_edge_object, view_matrix, proj_matrix);
         }
 
-        astronaut_edge_object.set_position(astronaut_object.get_position());
-        boids_program.render_game_object(astronaut_edge_object, view_matrix, proj_matrix);
+        thwomp_edge_object.set_position(thwomp_object.get_position());
+        thwomp_edge_object.set_rotation(thwomp_object.get_rotation());
+        boids_program.render_game_object(thwomp_edge_object, view_matrix, proj_matrix);
 
-        // star_edge_object.set_position(star_object.get_position());
-        // render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
-
-        // star_edge_object.set_position(star_object_2.get_position());
-        // render_game_object(star_edge_object, view_matrix, proj_matrix, boids_program);
         boids_program.render_game_object(space_object, view_matrix, proj_matrix);
 
         for (const auto& planet : planet_positions_and_textures)
@@ -251,9 +229,7 @@ int main()
         }
 
         glCullFace(GL_BACK);
-        boids_program.render_game_object(astronaut_object, view_matrix, proj_matrix);
-        // render_game_object(star_object, view_matrix, proj_matrix, boids_program);
-        // render_game_object(star_object_2, view_matrix, proj_matrix, boids_program);
+        boids_program.render_game_object(thwomp_object, view_matrix, proj_matrix);
 
         for (auto& b : boids)
         {
@@ -273,7 +249,7 @@ int main()
             b.update(&ctx, boids, coeffs);
         }
 
-        for (const auto& planet : planet_positions_and_textures) // TODO dans classe planete
+        for (const auto& planet : planet_positions_and_textures)
         {
             switch (static_cast<int>(planet[3]))
             {
@@ -316,8 +292,6 @@ int main()
         }
 
         glDisable(GL_CULL_FACE);
-
-        // render_game_object(star_object, view_matrix, proj_matrix, boids_program);
     };
 
     ctx.start();
