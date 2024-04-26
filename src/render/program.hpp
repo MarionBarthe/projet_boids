@@ -1,6 +1,6 @@
 #pragma once
-#include "p6/p6.h"
 #include "game_object.hpp"
+#include "p6/p6.h"
 
 class Program {
 public:
@@ -47,5 +47,4 @@ public:
 
     void use() const;
     void render_game_object(GameObject& object, const glm::mat4& view_matrix, const glm::mat4& proj_matrix);
-
 };

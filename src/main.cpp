@@ -1,8 +1,6 @@
 #include <cstddef>
 #include <cstdlib>
 #include <vector>
-#include "scene_objects/boid.hpp"
-#include "render/game_object.hpp"
 #include "glimac/common.hpp"
 #include "glimac/sphere_vertices.hpp"
 #include "glimac/trackball_camera.hpp"
@@ -10,17 +8,18 @@
 #include "glm/fwd.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "p6/p6.h"
+#include "render/game_object.hpp"
 #include "render/texture_manager.hpp"
 #include "render/vao.hpp"
 #include "render/vbo.hpp"
+#include "scene_objects/boid.hpp"
 #define DOCTEST_CONFIG_IMPLEMENT
-#include "maths/color.hpp"
 #include "doctest/doctest.h"
+#include "maths/color.hpp"
 #include "maths/markov_chain.hpp"
 #include "maths/random_generator.hpp"
-#include "scene_objects/surveyor.hpp"
 #include "render/program.hpp"
-
+#include "scene_objects/surveyor.hpp"
 
 struct Light {
     glm::vec3 position;  // Light position in view space
@@ -170,7 +169,7 @@ int main()
     lights[0].intensity         = glm::vec3(2.0f, 2.0f, 2.0f);
 
     ctx.update = [&]() {
-        // next_event_time = time_events(next_event_time, player, ctx);
+        next_event_time = time_events(next_event_time, player, ctx);
 
         ImGui::Begin("Boids command panel");
         ImGui::Text("Play with the parameters of the flock!");
