@@ -170,7 +170,7 @@ int main()
     lights[0].intensity         = glm::vec3(2.0f, 2.0f, 2.0f);
 
     ctx.update = [&]() {
-        next_event_time = time_events(next_event_time, player, ctx);
+        // next_event_time = time_events(next_event_time, player, ctx);
 
         ImGui::Begin("Boids command panel");
         ImGui::Text("Play with the parameters of the flock!");
