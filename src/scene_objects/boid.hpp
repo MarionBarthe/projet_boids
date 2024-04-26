@@ -22,6 +22,8 @@ struct BoidVariables {
     }
 };
 
+glm::vec3 random_position(float min, float max); 
+
 class Boid {
 private:
     glm::vec3 m_position;
