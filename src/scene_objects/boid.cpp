@@ -13,13 +13,21 @@ static glm::vec3 limit(glm::vec3 force)
     return force;
 }
 
-float manage_edge_collision(float position, float edge, float edge_offset)
+static float manage_edge_collision(float position, float edge, float edge_offset)
 {
     if (position < -edge)
         position = edge - edge_offset;
     if (position > edge)
         position = -(edge - edge_offset);
     return position;
+}
+
+static glm::vec3 random_position(float min, float max)
+{
+    float x = static_cast<float>(uniform_distribution(min, max));
+    float y = static_cast<float>(uniform_distribution(min, max));
+    float z = static_cast<float>(uniform_distribution(min, max));
+    return {x, y, z};
 }
 
 void Boid::update(p6::Context* ctx, const std::vector<Boid>& boids, BoidVariables variables)

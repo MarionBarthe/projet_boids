@@ -10,7 +10,7 @@ struct BoidVariables {
     float separate         = 0.5;
     float align            = 0.5;
     float cohesion         = 0.5;
-    bool  isLowPoly        = true;
+    bool  isLowPoly        = false;
 
     void draw_Gui()
     {
@@ -22,19 +22,13 @@ struct BoidVariables {
     }
 };
 
+glm::vec3 random_position(float min, float max); 
+
 class Boid {
 private:
     glm::vec3 m_position;
     glm::vec3 m_velocity;
     Color     m_color;
-
-    glm::vec3 random_position(float min, float max)
-    {
-        float x = static_cast<float>(uniform_distribution(min, max));
-        float y = static_cast<float>(uniform_distribution(min, max));
-        float z = static_cast<float>(uniform_distribution(min, max));
-        return {x, y, z};
-    }
 
 public:
     Boid()
