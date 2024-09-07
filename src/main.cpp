@@ -19,6 +19,7 @@
 #include "maths/markov_chain.hpp"
 #include "maths/random_generator.hpp"
 #include "render/program.hpp"
+#include "scene_objects/planet.hpp"
 #include "scene_objects/surveyor.hpp"
 
 struct Light {
@@ -132,13 +133,6 @@ int main()
     space_object.set_scale(glm::vec3(0.1f, 0.1f, 0.1f));
     space_object.set_lighting_factors({0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, 75.0f);
 
-    GameObject jupiter_object("assets/models/planet.obj", "assets/textures/2k_jupiter.jpg");
-    GameObject mars_object("assets/models/planet.obj", "assets/textures/2k_mars.jpg");
-    GameObject neptune_object("assets/models/planet.obj", "assets/textures/2k_neptune.jpg");
-    GameObject mercury_object("assets/models/planet.obj", "assets/textures/2k_mercury.jpg");
-    GameObject uranus_object("assets/models/planet.obj", "assets/textures/2k_uranus.jpg");
-    GameObject venus_surface_object("assets/models/planet.obj", "assets/textures/2k_venus_surface.jpg");
-    GameObject venus_atmosphere_object("assets/models/planet.obj", "assets/textures/2k_venus_atmosphere.jpg");
     GameObject planet_edge_object("assets/models/planet.obj", glm::vec3(.0f, .0f, .0f));
     planet_edge_object.set_scale({1.01f, 1.1f, 1.01f});
     planet_edge_object.set_lighting_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
@@ -159,6 +153,8 @@ int main()
         normal_distribution(rotation_random, 0, 0.5);
         planet_positions_and_textures[i] = std::vector<double>{x, y, z, static_cast<double>(texture_index), rotation_random[0] * 10, rotation_random[1] * 10};
     }
+
+    auto planets = Planet::create_planets();
 
     float last_x = 0;
     float last_y = 0;
@@ -221,9 +217,9 @@ int main()
 
         space_object.render_game_object(boids_program, view_matrix, proj_matrix);
 
-        for (const auto& planet : planet_positions_and_textures)
+        for (const auto& planet : planets)
         {
-            planet_edge_object.set_position({planet[0], planet[1], planet[2]});
+            planet_edge_object.set_position(planet.get_game_object()->get_position());
             planet_edge_object.render_game_object(boids_program, view_matrix, proj_matrix);
         }
 
@@ -239,46 +235,9 @@ int main()
             b.update(&ctx, boids, coeffs);
         }
 
-        for (const auto& planet : planet_positions_and_textures)
+        for (const auto& planet : planets)
         {
-            switch (static_cast<int>(planet[3]))
-            {
-            case 0:
-                jupiter_object.set_position({planet[0], planet[1], planet[2]});
-                jupiter_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                jupiter_object.render_game_object(boids_program, view_matrix, proj_matrix);
-                break;
-            case 1:
-                mars_object.set_position({planet[0], planet[1], planet[2]});
-                mars_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                mars_object.render_game_object(boids_program, view_matrix, proj_matrix);
-                break;
-            case 2:
-                neptune_object.set_position({planet[0], planet[1], planet[2]});
-                neptune_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                neptune_object.render_game_object(boids_program, view_matrix, proj_matrix);
-                break;
-            case 3:
-                venus_atmosphere_object.set_position({planet[0], planet[1], planet[2]});
-                venus_atmosphere_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                venus_atmosphere_object.render_game_object(boids_program, view_matrix, proj_matrix);
-                break;
-            case 4:
-                venus_surface_object.set_position({planet[0], planet[1], planet[2]});
-                venus_surface_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                venus_surface_object.render_game_object(boids_program, view_matrix, proj_matrix);
-                break;
-            case 5:
-                mercury_object.set_position({planet[0], planet[1], planet[2]});
-                mercury_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                mercury_object.render_game_object(boids_program, view_matrix, proj_matrix);
-                break;
-            default:
-                uranus_object.set_position({planet[0], planet[1], planet[2]});
-                uranus_object.set_rotation({planet[4] * ctx.time(), planet[5] * ctx.time(), 0});
-                uranus_object.render_game_object(boids_program, view_matrix, proj_matrix);
-                break;
-            }
+            planet.get_game_object()->render_game_object(boids_program, view_matrix, proj_matrix);
         }
 
         glDisable(GL_CULL_FACE);

@@ -1,4 +1,4 @@
-#include "unused_planet.hpp"
+#include "planet.hpp"
 
 std::vector<Planet> Planet::create_planets()
 {
@@ -25,7 +25,6 @@ Planet::Planet()
 
 Planet::~Planet()
 {
-    delete m_planet_object;
     m_planet_object = nullptr;
 }
 

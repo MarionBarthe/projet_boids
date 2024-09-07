@@ -58,6 +58,7 @@ void GameObject::load_texture(const std::string& texture_path)
 void GameObject::change_texture(const std::string& texture_path)
 {
     load_texture(texture_path);
+    this->m_use_texture = true;
 }
 
 void GameObject::change_color(const glm::vec3& color)
