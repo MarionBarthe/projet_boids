@@ -3,13 +3,15 @@
 #include <glm/glm.hpp>
 #include <string>
 #include "3D_model.hpp"
+#include "glm/gtc/type_ptr.hpp"
+#include "program.hpp"
 
 class GameObject {
 private:
     Model     m_3D_model;
     GLuint    m_texture_object;
     bool      m_use_texture; // Indicates whether to use a texture
-    glm::vec3 m_base_color;    // Base color if no texture is used
+    glm::vec3 m_base_color;  // Base color if no texture is used
 
     glm::vec3 m_position;
     glm::vec3 m_rotation;
@@ -33,7 +35,7 @@ public:
     void move_y(const float offset);
     void move_z(const float offset);
 
-    void set_factors(const glm::vec3& new_diffuse, const glm::vec3& new_specular, float new_shininess);
+    void set_lighting_factors(const glm::vec3& new_diffuse, const glm::vec3& new_specular, float new_shininess);
 
     glm::vec3 get_base_color() const { return m_base_color; }
     GLuint    get_texture() const { return m_texture_object; }
@@ -54,6 +56,8 @@ public:
     void change_color(const glm::vec3& color);
 
     void interpolate_material_factors(const glm::vec3& target_diffuse, const glm::vec3& target_specular, float target_shininess, float blend_factor);
+
+    void render_game_object(Program& program, const glm::mat4& view_matrix, const glm::mat4& proj_matrix);
 
     void draw() const;
 };
