@@ -22,6 +22,9 @@ private:
     glm::vec3 m_specular_factor;  // Specular reflectivity
     float     m_shininess_factor; // Shininess for specular highlight
 
+    void setup_matrices(Program& program, const glm::mat4& view_matrix, const glm::mat4& proj_matrix, const glm::mat4& model_matrix);
+    void setup_shader(Program& program, const glm::vec3& kd, const glm::vec3& ks, float shininess, const glm::vec3& color, bool use_texture);
+
 public:
     GameObject(const std::string& model_path, const std::string& texture_path);
     GameObject(const std::string& model_path, const glm::vec3& color);
@@ -58,6 +61,7 @@ public:
     void interpolate_material_factors(const glm::vec3& target_diffuse, const glm::vec3& target_specular, float target_shininess, float blend_factor);
 
     void render_game_object(Program& program, const glm::mat4& view_matrix, const glm::mat4& proj_matrix);
+    void render_edge(Program& program, const glm::mat4& view_matrix, const glm::mat4& proj_matrix, const float scale_factor);
 
     void draw() const;
 };

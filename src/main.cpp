@@ -1,22 +1,15 @@
 #include <cstddef>
 #include <cstdlib>
 #include <vector>
-#include "glimac/common.hpp"
-#include "glimac/sphere_vertices.hpp"
 #include "glimac/trackball_camera.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/fwd.hpp"
 #include "glm/gtc/type_ptr.hpp"
-#include "p6/p6.h"
 #include "render/game_object.hpp"
-#include "render/texture_manager.hpp"
-#include "render/vao.hpp"
-#include "render/vbo.hpp"
 #include "scene_objects/boid.hpp"
 #define DOCTEST_CONFIG_IMPLEMENT
 #include "doctest/doctest.h"
 #include "maths/color.hpp"
-#include "maths/markov_chain.hpp"
 #include "maths/random_generator.hpp"
 #include "render/program.hpp"
 #include "scene_objects/planet.hpp"
@@ -113,10 +106,6 @@ int main()
     thwomp_object.set_scale(glm::vec3(0.25f, 0.25f, 0.25f));
     thwomp_object.set_lighting_factors({0.7f, 0.7f, 0.7f}, {0.8f, 0.8f, 0.8f}, 100.0f);
 
-    GameObject thwomp_edge_object("assets/models/thwomp.obj", glm::vec3(.0f, .0f, .0f));
-    thwomp_edge_object.set_scale(glm::vec3(0.26f, 0.26f, 0.26f));
-    thwomp_edge_object.set_lighting_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
-
     GameObject star_boid("assets/models/star.obj", generate_vivid_color());
     star_boid.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
     star_boid.set_lighting_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 200.0f);
@@ -125,34 +114,9 @@ int main()
     star_boid_low.set_scale(glm::vec3(0.01f, 0.01f, 0.01f));
     star_boid_low.set_lighting_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 200.0f);
 
-    GameObject star_edge_object("assets/models/star.obj", glm::vec3(.0f, .0f, .0f));
-    star_edge_object.set_scale(glm::vec3(0.011f, 0.011f, 0.011f));
-    star_edge_object.set_lighting_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
-
     GameObject space_object("assets/models/space.obj", "assets/textures/space_texture.jpg");
     space_object.set_scale(glm::vec3(0.1f, 0.1f, 0.1f));
     space_object.set_lighting_factors({0.5f, 0.5f, 0.5f}, {0.5f, 0.5f, 0.5f}, 75.0f);
-
-    GameObject planet_edge_object("assets/models/planet.obj", glm::vec3(.0f, .0f, .0f));
-    planet_edge_object.set_scale({1.01f, 1.1f, 1.01f});
-    planet_edge_object.set_lighting_factors({1.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, 0.0f);
-
-    int                              number_of_planets = binomial_distribution_cdf(12, 0.5);
-    std::vector<std::vector<double>> planet_positions_and_textures(number_of_planets);
-
-    float scale_cube = 180 * 0.1;
-    for (int i = 0; i < number_of_planets; i++)
-    {
-        double x = (beta_distribution(1.0, 1.0) - 0.5) * scale_cube;
-        double y = (beta_distribution(1.0, 1.0) - 0.5) * scale_cube;
-        double z = (beta_distribution(1.0, 1.0) - 0.5) * scale_cube;
-
-        int texture_index = discrete_uniform_distribution(0, 6);
-
-        std::vector<double> rotation_random;
-        normal_distribution(rotation_random, 0, 0.5);
-        planet_positions_and_textures[i] = std::vector<double>{x, y, z, static_cast<double>(texture_index), rotation_random[0] * 10, rotation_random[1] * 10};
-    }
 
     auto planets = Planet::create_planets();
 
@@ -203,29 +167,22 @@ int main()
         glUniform3fv(boids_program.u_light_intensity_1, 1, glm::value_ptr(lights[1].intensity));
 
         glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
 
+        glCullFace(GL_FRONT);
         for (auto& b : boids)
         {
-            star_edge_object.set_position(b.get_position());
-            star_edge_object.render_game_object(boids_program, view_matrix, proj_matrix);
+            star_boid.set_position(b.get_position());
+            star_boid.render_edge(boids_program, view_matrix, proj_matrix, 1.1);
         }
-
-        thwomp_edge_object.set_position(thwomp_object.get_position());
-        thwomp_edge_object.set_rotation(thwomp_object.get_rotation());
-        thwomp_edge_object.render_game_object(boids_program, view_matrix, proj_matrix);
-
-        space_object.render_game_object(boids_program, view_matrix, proj_matrix);
-
+        thwomp_object.render_edge(boids_program, view_matrix, proj_matrix, 1.05);
         for (const auto& planet : planets)
         {
-            planet_edge_object.set_position(planet.get_game_object()->get_position());
-            planet_edge_object.render_game_object(boids_program, view_matrix, proj_matrix);
+            planet.get_game_object()->render_edge(boids_program, view_matrix, proj_matrix, 1.025);
         }
+        space_object.render_game_object(boids_program, view_matrix, proj_matrix);
 
         glCullFace(GL_BACK);
         thwomp_object.render_game_object(boids_program, view_matrix, proj_matrix);
-
         for (auto& b : boids)
         {
             auto& star_to_render = coeffs.isLowPoly ? star_boid_low : star_boid;
@@ -234,7 +191,6 @@ int main()
             star_to_render.render_game_object(boids_program, view_matrix, proj_matrix);
             b.update(&ctx, boids, coeffs);
         }
-
         for (const auto& planet : planets)
         {
             planet.get_game_object()->render_game_object(boids_program, view_matrix, proj_matrix);
